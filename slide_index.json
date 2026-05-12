@@ -6,6 +6,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Minimalist, dark background, professional.",
     "visual_style": "Minimalist",
+    "service_type": "General Agency",
+    "service_category": "General",
     "content": "Title, Agenda, and Introduction to Klimt & Design.",
     "text": "Intro General Agency Minimalist, dark background, professional. Title, Agenda, and Introduction to Klimt & Design."
   },
@@ -16,6 +18,8 @@
     "industry": "General Agency",
     "visual_style_raw": "High-end professional portraits, \"Y-Combinator\" and \"Stripe\" logos.",
     "visual_style": "Luxury",
+    "service_type": "General Agency",
+    "service_category": "General",
     "content": "Detailed bios of founders (Michelle, Ayema, Hugh) and the full 20+ person team.",
     "text": "Team General Agency High-end professional portraits, \"Y-Combinator\" and \"Stripe\" logos. Detailed bios of founders (Michelle, Ayema, Hugh) and the full 20+ person team."
   },
@@ -26,6 +30,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Organizational chart, clean typography.",
     "visual_style": "Corporate",
+    "service_type": "General Agency",
+    "service_category": "General",
     "content": "How the agency works: Fixed teams, US hours, and Figma-based collaboration.",
     "text": "Process General Agency Organizational chart, clean typography. How the agency works: Fixed teams, US hours, and Figma-based collaboration."
   },
@@ -36,6 +42,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Text-heavy, serif fonts, \"Client Love\" focus.",
     "visual_style": "Corporate",
+    "service_type": "General Agency",
+    "service_category": "General",
     "content": "High-praise quotes from CEOs at Climb Advisors, Fuel to Fly, and Opal Ventures.",
     "text": "Testimonials General Agency Text-heavy, serif fonts, \"Client Love\" focus. High-praise quotes from CEOs at Climb Advisors, Fuel to Fly, and Opal Ventures."
   },
@@ -46,6 +54,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Massive logo clouds including VISA, SAP, Calendly, and ClickUp.",
     "visual_style": "Corporate",
+    "service_type": "General Agency",
+    "service_category": "General",
     "content": "Industry-specific logo grids: AI, B2B/SaaS, Healthcare, Finance, Consumer, and Fintech.",
     "text": "Clients General Agency Massive logo clouds including VISA, SAP, Calendly, and ClickUp. Industry-specific logo grids: AI, B2B/SaaS, Healthcare, Finance, Consumer, and Fintech."
   },
@@ -56,6 +66,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Dashboard UI, Mobile App screens, Dark Mode.",
     "visual_style": "Futuristic",
+    "service_type": "General Agency",
+    "service_category": "General",
     "content": "Web/Mobile design, Design Systems, and Wireframing.",
     "text": "UX/UI Design General Agency Dashboard UI, Mobile App screens, Dark Mode. Web/Mobile design, Design Systems, and Wireframing."
   },
@@ -66,6 +78,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Brand palettes, Logo marks (Secludy, Sona Padel).",
     "visual_style": "Corporate",
+    "service_type": "General Agency",
+    "service_category": "General",
     "content": "Branding, Logos, and Style Guides.",
     "text": "Identity Design General Agency Brand palettes, Logo marks (Secludy, Sona Padel). Branding, Logos, and Style Guides."
   },
@@ -76,6 +90,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Product demos, motion graphics.",
     "visual_style": "Corporate",
+    "service_type": "General Agency",
+    "service_category": "General",
     "content": "Prototyping and Animation work.",
     "text": "Interaction General Agency Product demos, motion graphics. Prototyping and Animation work."
   },
@@ -86,6 +102,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Pitch decks, Data visualization, PDF layouts.",
     "visual_style": "Technical",
+    "service_type": "General Agency",
+    "service_category": "General",
     "content": "Investor decks, Marketing assets, and One-sheets.",
     "text": "Information General Agency Pitch decks, Data visualization, PDF layouts. Investor decks, Marketing assets, and One-sheets."
   },
@@ -96,6 +114,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Social media layouts, E-book covers, Case studies.",
     "visual_style": "Corporate",
+    "service_type": "General Agency",
+    "service_category": "General",
     "content": "Paid Media, UGC ads, Whitepapers, and SEO Blogs.",
     "text": "Content/Ads General Agency Social media layouts, E-book covers, Case studies. Paid Media, UGC ads, Whitepapers, and SEO Blogs."
   },
@@ -106,6 +126,8 @@
     "industry": "Finance & Wealth Management",
     "visual_style_raw": "Luxury, High-End. Dark blue, yacht imagery, elegant serif fonts.",
     "visual_style": "Luxury",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Website mockup: \"Earn More. Keep More. Build Lasting Wealth.\".",
     "text": "EvergreenWealth Fintech / Wealth Mgmt Luxury, High-End. Dark blue, yacht imagery, elegant serif fonts. Website mockup: \"Earn More. Keep More. Build Lasting Wealth.\"."
   },
@@ -116,6 +138,8 @@
     "industry": "Finance & Wealth Management",
     "visual_style_raw": "Informative. Custom infographics, clean data visualization.",
     "visual_style": "Technical",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Tax-Loss Harvesting charts (+29% return) and \"Four Generations of Investing\" timeline.",
     "text": "EvergreenWealth Fintech / Wealth Mgmt Informative. Custom infographics, clean data visualization. Tax-Loss Harvesting charts (+29% return) and \"Four Generations of Investing\" timeline."
   },
@@ -126,6 +150,8 @@
     "industry": "Finance & Wealth Management",
     "visual_style_raw": "Sophisticated. Taupe, Clay, and Slate palette.",
     "visual_style": "Luxury",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Detailed FAQ mockup, pricing strategies, and \"Dynamic Portfolio\" explanations.",
     "text": "EvergreenWealth Fintech / Wealth Mgmt Sophisticated. Taupe, Clay, and Slate palette. Detailed FAQ mockup, pricing strategies, and \"Dynamic Portfolio\" explanations."
   },
@@ -136,6 +162,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Modern Tech. iPhone and Laptop mockups, airy white space.",
     "visual_style": "Minimalist",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "\"Flexible payment plans\" landing page and UI for spending limits.",
     "text": "ClarityPay Fintech / Payments Modern Tech. iPhone and Laptop mockups, airy white space. \"Flexible payment plans\" landing page and UI for spending limits."
   },
@@ -146,6 +174,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Artistic. Hand-painted watercolor iconography.",
     "visual_style": "Playful",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Icons representing Medical (wellness), Travel, Tech, and Construction .",
     "text": "ClarityPay Fintech / Payments Artistic. Hand-painted watercolor iconography. Icons representing Medical (wellness), Travel, Tech, and Construction ."
   },
@@ -156,6 +186,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Clean. Mobile-first, responsive layouts.",
     "visual_style": "Product",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Industry focus: Health & Wellness and Retail loyalty.",
     "text": "ClarityPay Fintech / Payments Clean. Mobile-first, responsive layouts. Industry focus: Health & Wellness and Retail loyalty."
   },
@@ -166,6 +198,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Creative. Watercolor-style leadership portraits.",
     "visual_style": "Playful",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Humanizing the team behind the financial technology.",
     "text": "ClarityPay Fintech / Payments Creative. Watercolor-style leadership portraits. Humanizing the team behind the financial technology."
   },
@@ -176,6 +210,8 @@
     "industry": "Fashion & Apparel",
     "visual_style_raw": "Editorial. Beach photography, high-grain, \"Summer Vibes\".",
     "visual_style": "Editorial",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "\"Drop 01: Ocean's Wit\" landing page mockup.",
     "text": "Nonchalant Lifestyle / Apparel Editorial. Beach photography, high-grain, \"Summer Vibes\". \"Drop 01: Ocean's Wit\" landing page mockup."
   },
@@ -186,6 +222,8 @@
     "industry": "Fashion & Apparel",
     "visual_style_raw": "Sustainable. Minimalist, e-commerce mobile UI.",
     "visual_style": "Minimalist",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Mission copy: \"Apparel with purpose,\" 1% for the Planet.",
     "text": "Nonchalant Lifestyle / Apparel Sustainable. Minimalist, e-commerce mobile UI. Mission copy: \"Apparel with purpose,\" 1% for the Planet."
   },
@@ -196,6 +234,8 @@
     "industry": "Fashion & Apparel",
     "visual_style_raw": "Nature-Inspired. Palette: Seaweed, Jade, Coral.",
     "visual_style": "Sustainable",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Brand colors and product reviews interface .",
     "text": "Nonchalant Lifestyle / Apparel Nature-Inspired. Palette: Seaweed, Jade, Coral. Brand colors and product reviews interface ."
   },
@@ -206,6 +246,8 @@
     "industry": "Consumer & E-commerce",
     "visual_style_raw": "Heritage / Vintage. Woodcut illustrations, classic swirls.",
     "visual_style": "Playful",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Custom logo marks for Chicago neighborhoods (Gold Coast, Andersonville).",
     "text": "Ta'Da Laundry Consumer Service Heritage / Vintage. Woodcut illustrations, classic swirls. Custom logo marks for Chicago neighborhoods (Gold Coast, Andersonville)."
   },
@@ -216,6 +258,8 @@
     "industry": "Consumer & E-commerce",
     "visual_style_raw": "Tactile. Paper-textured bag mockups, dark green/cream palette.",
     "visual_style": "Vintage",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Print collateral: grand opening postcards and branded sneaker spa boxes.",
     "text": "Ta'Da Laundry Consumer Service Tactile. Paper-textured bag mockups, dark green/cream palette. Print collateral: grand opening postcards and branded sneaker spa boxes."
   },
@@ -226,6 +270,8 @@
     "industry": "Consumer & E-commerce",
     "visual_style_raw": "Whimsical. \"Magic\" theme illustrations, magicians, playing cards.",
     "visual_style": "Playful",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Service stickers: \"Abraca-Broken\" and \"The Spirits Say.. Service will be restored soon\".",
     "text": "Ta'Da Laundry Consumer Service Whimsical. \"Magic\" theme illustrations, magicians, playing cards. Service stickers: \"Abraca-Broken\" and \"The Spirits Say.. Service will be restored soon\"."
   },
@@ -236,6 +282,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Playful Tech. Friendly mascot logo, vibrant color ramp.",
     "visual_style": "Playful",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Brand kit: Teal, Yellow, Purple, Pink, and Blue palette .",
     "text": "Invoice Butler B2B SaaS / Fintech Playful Tech. Friendly mascot logo, vibrant color ramp. Brand kit: Teal, Yellow, Purple, Pink, and Blue palette ."
   },
@@ -246,6 +294,8 @@
     "industry": "Fashion & Apparel",
     "visual_style_raw": "Streetwear. Gridded web layouts, high-fashion imagery.",
     "visual_style": "Editorial",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Full brand system: Satoshi & Supreme typography, \"Next Drop Incoming\" grid.",
     "text": "Nonchalant Lifestyle / Apparel Streetwear. Gridded web layouts, high-fashion imagery. Full brand system: Satoshi & Supreme typography, \"Next Drop Incoming\" grid."
   },
@@ -256,6 +306,8 @@
     "industry": "Finance & Trading",
     "visual_style_raw": "Bold vs. Technical. Gradients, glows, sharp sans-serifs.",
     "visual_style": "Futuristic",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Two directions: \"Dimensional Bold\" (immersive) vs. \"Thoughtful Simplicity\" (clear).",
     "text": "Long Short List Finance / Trading Bold vs. Technical. Gradients, glows, sharp sans-serifs. Two directions: \"Dimensional Bold\" (immersive) vs. \"Thoughtful Simplicity\" (clear)."
   },
@@ -266,6 +318,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Structured. Investment greens/browns, line duotone icons.",
     "visual_style": "Corporate",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Web UI components: Buttons, Text fields, and Portfolio Growth bar charts.",
     "text": "1860 Equity Fintech / Fund Structured. Investment greens/browns, line duotone icons. Web UI components: Buttons, Text fields, and Portfolio Growth bar charts."
   },
@@ -276,6 +330,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Futuristic. Dark mode, glowing blue UI, high-end interior renders.",
     "visual_style": "Luxury",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "\"Meet your design copilot\": AI assistant for interior perspective visualization.",
     "text": "SketchPro AI / Architecture Futuristic. Dark mode, glowing blue UI, high-end interior renders. \"Meet your design copilot\": AI assistant for interior perspective visualization."
   },
@@ -286,6 +342,8 @@
     "industry": "Venture Capital",
     "visual_style_raw": "Approachable. Team-focused, clean cards, health-tech icons.",
     "visual_style": "Corporate",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Founder bio for Owen Willis and \"WellTheory\" partner project.",
     "text": "Opal Ventures Venture Capital Approachable. Team-focused, clean cards, health-tech icons. Founder bio for Owen Willis and \"WellTheory\" partner project."
   },
@@ -296,6 +354,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Minimalist. Geometric marks, high contrast black/white.",
     "visual_style": "Minimalist",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Identity design for Secludy, DeepTrail, and nVisionX.",
     "text": "Misc. Logos Tech / General Minimalist. Geometric marks, high contrast black/white. Identity design for Secludy, DeepTrail, and nVisionX."
   },
@@ -306,6 +366,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Professional. \"Before vs. After\" web comparison, real estate imagery.",
     "visual_style": "Corporate",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Redesign: Model with Precision. Features: \"Instant Insights\" and \"Compare scenarios\".",
     "text": "Pantera PropTech / AI Professional. \"Before vs. After\" web comparison, real estate imagery. Redesign: Model with Precision. Features: \"Instant Insights\" and \"Compare scenarios\"."
   },
@@ -316,6 +378,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Functional. Complex dashboard UI, investment modeling tools.",
     "visual_style": "Playful",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Web platform walkthrough: Asset details, finance, and \"models in <5 mins\".",
     "text": "Pantera PropTech / AI Functional. Complex dashboard UI, investment modeling tools. Web platform walkthrough: Asset details, finance, and \"models in <5 mins\"."
   },
@@ -326,6 +390,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "Data-Heavy. Technical prompt engineering interfaces.",
     "visual_style": "Technical",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Evaluation reports, prompt versioning UI, and Pricing tiers ($500-$580/mo).",
     "text": "CodeThread DevTools / AI Data-Heavy. Technical prompt engineering interfaces. Evaluation reports, prompt versioning UI, and Pricing tiers ($500-$580/mo)."
   },
@@ -336,6 +402,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "High-Tech. Neon accents, \"No-Code\" platform aesthetics.",
     "visual_style": "Futuristic",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "\"Paradigm\" platform: On-premise deployment and custom AI agents.",
     "text": "LightOn Enterprise AI High-Tech. Neon accents, \"No-Code\" platform aesthetics. \"Paradigm\" platform: On-premise deployment and custom AI agents."
   },
@@ -346,6 +414,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Clean / Crisp. Data clustering diagrams, intent modeling.",
     "visual_style": "Corporate",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Evaluation reports, intent classification UI, and \"How it works\" diagrams.",
     "text": "HumanFirst AI / CX Clean / Crisp. Data clustering diagrams, intent modeling. Evaluation reports, intent classification UI, and \"How it works\" diagrams."
   },
@@ -356,6 +426,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "Industrial Tech. Technical extraction UI, field detection.",
     "visual_style": "Technical",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "\"Analyze documents/photos with AI\" workflows and Two-Way Sync automation.",
     "text": "Guru Video AI / SaaS Industrial Tech. Technical extraction UI, field detection. \"Analyze documents/photos with AI\" workflows and Two-Way Sync automation."
   },
@@ -366,6 +438,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "Action-Oriented. Video timeline consoles, athlete analysis.",
     "visual_style": "Bold",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "AI Templates: Sprints coach (NFL-style), Jump Shot coach, and Pet Behavior monitor.",
     "text": "Guru Video AI / SaaS Action-Oriented. Video timeline consoles, athlete analysis. AI Templates: Sprints coach (NFL-style), Jump Shot coach, and Pet Behavior monitor."
   },
@@ -376,6 +450,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Social Proof. Logo cloud of recognized brands like Google, Stripe, and Shopify .",
     "visual_style": "Corporate",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Global brand collaboration list to establish massive scale and trust .",
     "text": "Agency Portfolio General Design Social Proof. Logo cloud of recognized brands like Google, Stripe, and Shopify . Global brand collaboration list to establish massive scale and trust ."
   },
@@ -386,6 +462,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Mobile-First. High-fidelity mobile UI screens .",
     "visual_style": "Product",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Payment plan selection screens showing \"No Interest\" and \"Fixed Installment\" options .",
     "text": "ClarityPay Fintech / Payments Mobile-First. High-fidelity mobile UI screens . Payment plan selection screens showing \"No Interest\" and \"Fixed Installment\" options ."
   },
@@ -396,6 +474,8 @@
     "industry": "Fashion & Apparel",
     "visual_style_raw": "Fashion Editorial. Sun-drenched photography, minimalist typography .",
     "visual_style": "Minimalist",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Apparel landing page showing \"Limited Edition Drops\" and \"Summer Vibes\" branding .",
     "text": "Nonchalant Lifestyle / Apparel Fashion Editorial. Sun-drenched photography, minimalist typography . Apparel landing page showing \"Limited Edition Drops\" and \"Summer Vibes\" branding ."
   },
@@ -406,6 +486,8 @@
     "industry": "Consumer & E-commerce",
     "visual_style_raw": "Classic Illustration. Woodcut-style drawings of laundry icons (clothespins, hampers) .",
     "visual_style": "Playful",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Branding suite: neighborhood-specific logos and \"Clean Starts Here\" messaging .",
     "text": "Ta'Da Laundry Consumer Service Classic Illustration. Woodcut-style drawings of laundry icons (clothespins, hampers) . Branding suite: neighborhood-specific logos and \"Clean Starts Here\" messaging ."
   },
@@ -416,6 +498,8 @@
     "industry": "Finance & Trading",
     "visual_style_raw": "Conservative & Professional. Traditional grid layouts, investment greens .",
     "visual_style": "Corporate",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Website components: \"A Legacy of Growth and Trust\" headers and investment team bios .",
     "text": "1860 Equity Finance / Fund Conservative & Professional. Traditional grid layouts, investment greens . Website components: \"A Legacy of Growth and Trust\" headers and investment team bios ."
   },
@@ -426,6 +510,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Clean SaaS. Navy and white dashboard interfaces .",
     "visual_style": "Technical",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Feature highlights: \"Model with Precision\" real estate investment tools and scenario analysis .",
     "text": "Pantera PropTech / AI Clean SaaS. Navy and white dashboard interfaces . Feature highlights: \"Model with Precision\" real estate investment tools and scenario analysis ."
   },
@@ -436,6 +522,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "Developer Aesthetic. Code blocks, prompt versioning UI .",
     "visual_style": "Technical",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "Platform screens: \"Take the Engineer out of Prompt Engineering\" marketing and technical UI .",
     "text": "CodeThread DevTools / AI Developer Aesthetic. Code blocks, prompt versioning UI . Platform screens: \"Take the Engineer out of Prompt Engineering\" marketing and technical UI ."
   },
@@ -446,6 +534,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Data Visualization. Complex node-based clustering diagrams .",
     "visual_style": "Technical",
+    "service_type": "Landing Page - SaaS",
+    "service_category": "Landing Page",
     "content": "\"Your data, your decisions\" landing page and intent classification dashboards .",
     "text": "HumanFirst AI / CX Data Visualization. Complex node-based clustering diagrams . \"Your data, your decisions\" landing page and intent classification dashboards ."
   },
@@ -456,6 +546,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "Industrial & Technical. Dark mode UI with bright purple/blue accents .",
     "visual_style": "Futuristic",
+    "service_type": "Landing Page - Fintech",
+    "service_category": "Landing Page",
     "content": "Functional UI: Video extraction fields and AI-powered document analysis console .",
     "text": "Guru Video AI / SaaS Industrial & Technical. Dark mode UI with bright purple/blue accents . Functional UI: Video extraction fields and AI-powered document analysis console ."
   },
@@ -466,6 +558,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "High-End Renders. Blue-glowing gradients, dark mode .",
     "visual_style": "Luxury",
+    "service_type": "Landing Page - Fintech",
+    "service_category": "Landing Page",
     "content": "\"Meet your design copilot\": Architectural AI assistant landing page and interior style references .",
     "text": "SketchPro AI / Architecture High-End Renders. Blue-glowing gradients, dark mode . \"Meet your design copilot\": Architectural AI assistant landing page and interior style references ."
   },
@@ -476,6 +570,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Cyber/Futuristic. Neon green accents on deep black .",
     "visual_style": "Futuristic",
+    "service_type": "Landing Page - Fintech",
+    "service_category": "Landing Page",
     "content": "\"GenAI for Enterprise\": Secure, scalable platform screens and \"No-Code\" interface demos .",
     "text": "LightOn Enterprise AI Cyber/Futuristic. Neon green accents on deep black . \"GenAI for Enterprise\": Secure, scalable platform screens and \"No-Code\" interface demos ."
   },
@@ -486,6 +582,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "Friendly B2B. Vibrant colors, friendly illustration styles .",
     "visual_style": "Playful",
+    "service_type": "Landing Page - Finance",
+    "service_category": "Landing Page",
     "content": "Brand identity kit: Logo variations and color palette (Yellow, Teal, Purple) .",
     "text": "Invoice Butler B2B SaaS Friendly B2B. Vibrant colors, friendly illustration styles . Brand identity kit: Logo variations and color palette (Yellow, Teal, Purple) ."
   },
@@ -496,6 +594,8 @@
     "industry": "Venture Capital",
     "visual_style_raw": "Minimalist & airy. Crisp white space, soft shadow layering .",
     "visual_style": "Minimalist",
+    "service_type": "Landing Page - Finance",
+    "service_category": "Landing Page",
     "content": "Founder-focused storytelling: Bio cards and partnership ecosystem maps .",
     "text": "Opal Ventures Venture Capital Minimalist & airy. Crisp white space, soft shadow layering . Founder-focused storytelling: Bio cards and partnership ecosystem maps ."
   },
@@ -506,6 +606,8 @@
     "industry": "Finance & Wealth Management",
     "visual_style_raw": "Luxury Lifestyle. High-contrast photography, premium gold/dark palettes .",
     "visual_style": "Luxury",
+    "service_type": "Landing Page - Finance",
+    "service_category": "Landing Page",
     "content": "Website mockup: \"Earn More. Keep More.\" with high-net-worth imagery .",
     "text": "EvergreenWealth Finance / Wealth Luxury Lifestyle. High-contrast photography, premium gold/dark palettes . Website mockup: \"Earn More. Keep More.\" with high-net-worth imagery ."
   },
@@ -516,6 +618,8 @@
     "industry": "Fashion & Apparel",
     "visual_style_raw": "Sustainable Luxury. Recycled paper textures, nature photography .",
     "visual_style": "Luxury",
+    "service_type": "Landing Page - Finance",
+    "service_category": "Landing Page",
     "content": "Brand story: \"1% for the Planet\" and \"Made to Stay\" ethos slides .",
     "text": "Nonchalant Lifestyle / Apparel Sustainable Luxury. Recycled paper textures, nature photography . Brand story: \"1% for the Planet\" and \"Made to Stay\" ethos slides ."
   },
@@ -526,6 +630,8 @@
     "industry": "Consumer & E-commerce",
     "visual_style_raw": "Hand-Drawn. Whimsical \"Magic\" illustrations .",
     "visual_style": "Playful",
+    "service_type": "Landing Page - Finance",
+    "service_category": "Landing Page",
     "content": "Marketing stickers: \"Abraca-Broken\" and \"The Spirits Say.. Service will be restored soon\" .",
     "text": "Ta'Da Laundry Consumer Service Hand-Drawn. Whimsical \"Magic\" illustrations . Marketing stickers: \"Abraca-Broken\" and \"The Spirits Say.. Service will be restored soon\" ."
   },
@@ -536,6 +642,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Comparison/Transformation. Side-by-side redesign layouts .",
     "visual_style": "Product",
+    "service_type": "Landing Page - Finance",
+    "service_category": "Landing Page",
     "content": "\"Before vs. After\" case study showing the visual elevation of a tech product .",
     "text": "Pantera PropTech / AI Comparison/Transformation. Side-by-side redesign layouts . \"Before vs. After\" case study showing the visual elevation of a tech product ."
   },
@@ -546,6 +654,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Product Showcase. Device mockups (Apple Watch, iPhone) .",
     "visual_style": "Product",
+    "service_type": "Landing Page - Finance",
+    "service_category": "Landing Page",
     "content": "Omni-channel experience: Showing payment plans across all customer touchpoints .",
     "text": "ClarityPay Fintech / Payments Product Showcase. Device mockups (Apple Watch, iPhone) . Omni-channel experience: Showing payment plans across all customer touchpoints ."
   },
@@ -556,6 +666,8 @@
     "industry": "Finance & Trading",
     "visual_style_raw": "High-Conviction. Glow effects, layered textures .",
     "visual_style": "Futuristic",
+    "service_type": "Landing Page - Services",
+    "service_category": "Landing Page",
     "content": "\"No Hype, No Noise\" marketing slides and stock research dashboard mockups .",
     "text": "Long Short List Finance / Trading High-Conviction. Glow effects, layered textures . \"No Hype, No Noise\" marketing slides and stock research dashboard mockups ."
   },
@@ -566,6 +678,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "Action Analysis. Motion tracking overlays on sports footage .",
     "visual_style": "Bold",
+    "service_type": "Landing Page - Services",
+    "service_category": "Landing Page",
     "content": "AI Templates: \"Sprints Coach\" and \"Jump Shot Coach\" technical demos .",
     "text": "Guru Video AI / SaaS Action Analysis. Motion tracking overlays on sports footage . AI Templates: \"Sprints Coach\" and \"Jump Shot Coach\" technical demos ."
   },
@@ -576,6 +690,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Sleek & Visual. Grid-based portfolio displays .",
     "visual_style": "Luxury",
+    "service_type": "Landing Page - Services",
+    "service_category": "Landing Page",
     "content": "\"Iterate fast\": Showing multiple AI-generated variations of the same interior space .",
     "text": "SketchPro AI / Architecture Sleek & Visual. Grid-based portfolio displays . \"Iterate fast\": Showing multiple AI-generated variations of the same interior space ."
   },
@@ -586,6 +702,8 @@
     "industry": "Healthcare & HealthTech",
     "visual_style_raw": "Trustworthy, Medical. Grid of logos (TraumaCare.AI, ViyaMD, Swiss Monkey).",
     "visual_style": "Corporate",
+    "service_type": "Landing Page - Services",
+    "service_category": "Landing Page",
     "content": "Comprehensive list of healthcare clients focusing on therapy, billing, and AI diagnostics.",
     "text": "Healthcare Vertical Healthcare / HealthTech Trustworthy, Medical. Grid of logos (TraumaCare.AI, ViyaMD, Swiss Monkey). Comprehensive list of healthcare clients focusing on therapy, billing, and AI diagnostics."
   },
@@ -596,6 +714,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Institutional, Secure. Logo grids (AllianceBernstein, Ivy Asset Group, Parkstone).",
     "visual_style": "Corporate",
+    "service_type": "Landing Page - Services",
+    "service_category": "Landing Page",
     "content": "Demonstrates experience with investment management, capital groups, and equity firms.",
     "text": "Financial & Funds Finance / VC / Fintech Institutional, Secure. Logo grids (AllianceBernstein, Ivy Asset Group, Parkstone). Demonstrates experience with investment management, capital groups, and equity firms."
   },
@@ -606,6 +726,8 @@
     "industry": "Consumer & E-commerce",
     "visual_style_raw": "Lifestyle, Vibrant. High-recognition logos (TikTok, Savage X Fenty, Brooklinen).",
     "visual_style": "Editorial",
+    "service_type": "Landing Page - Healthcare",
+    "service_category": "Landing Page",
     "content": "Focus on direct-to-consumer (DTC), apparel, beauty, and wellness brands.",
     "text": "Consumer Brands Consumer / E-comm Lifestyle, Vibrant. High-recognition logos (TikTok, Savage X Fenty, Brooklinen). Focus on direct-to-consumer (DTC), apparel, beauty, and wellness brands."
   },
@@ -616,6 +738,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Modern Financial. Blue/Purple gradient branding (Clarity Pay, Fasten, Savvy).",
     "visual_style": "Corporate",
+    "service_type": "Landing Page - Healthcare",
+    "service_category": "Landing Page",
     "content": "Highlights specialized experience in \"Point-of-Sale\" and \"Asset Management\" tech.",
     "text": "Fintech Vertical Fintech / Banking Modern Financial. Blue/Purple gradient branding (Clarity Pay, Fasten, Savvy). Highlights specialized experience in \"Point-of-Sale\" and \"Asset Management\" tech."
   },
@@ -626,6 +750,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Premium, Clean. Large photography, minimalist sans-serif typography.",
     "visual_style": "Luxury",
+    "service_type": "Landing Page - Healthcare",
+    "service_category": "Landing Page",
     "content": "\"What We Do\": Positioning as a partner for venture-backed companies.",
     "text": "Capability Intro General Agency Premium, Clean. Large photography, minimalist sans-serif typography. \"What We Do\": Positioning as a partner for venture-backed companies."
   },
@@ -636,6 +762,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Product-Focused. Dashboard mockups, mobile banking screens.",
     "visual_style": "Technical",
+    "service_type": "Landing Page - Healthcare",
+    "service_category": "Landing Page",
     "content": "Services: Web/Mobile design, design systems, and wireframing.",
     "text": "UX/UI Design Tech / Software Product-Focused. Dashboard mockups, mobile banking screens. Services: Web/Mobile design, design systems, and wireframing."
   },
@@ -646,6 +774,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Graphic, Iconic. Logo marks and style guide grids.",
     "visual_style": "Corporate",
+    "service_type": "Graphics",
+    "service_category": "Graphics",
     "content": "Services: Branding, Logos, and comprehensive Style Guides.",
     "text": "Identity Design Branding Graphic, Iconic. Logo marks and style guide grids. Services: Branding, Logos, and comprehensive Style Guides."
   },
@@ -656,6 +786,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Structured, Clear. Layouts for pitch decks and one-sheets.",
     "visual_style": "Corporate",
+    "service_type": "Graphics",
+    "service_category": "Graphics",
     "content": "Services: Investor decks, flyers, banners, and conference assets.",
     "text": "Information Design Corporate / Sales Structured, Clear. Layouts for pitch decks and one-sheets. Services: Investor decks, flyers, banners, and conference assets."
   },
@@ -666,6 +798,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Dynamic, Fluid. Animation frames and interactive prototypes.",
     "visual_style": "Bold",
+    "service_type": "Graphics",
+    "service_category": "Graphics",
     "content": "Services: Prototyping and animation for digital products.",
     "text": "Interaction Design Tech / Motion Dynamic, Fluid. Animation frames and interactive prototypes. Services: Prototyping and animation for digital products."
   },
@@ -676,6 +810,8 @@
     "industry": "Operations & Logistics",
     "visual_style_raw": "Technical. Webflow development, SEO, and copywriting tags.",
     "visual_style": "Technical",
+    "service_type": "Graphics",
+    "service_category": "Graphics",
     "content": "Shows technical implementation capabilities beyond pure visual design.",
     "text": "\"Other\" Services Operations / Dev Technical. Webflow development, SEO, and copywriting tags. Shows technical implementation capabilities beyond pure visual design."
   },
@@ -686,6 +822,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "App-Centric. Mobile finance screens, \"Track every dollar\" UI.",
     "visual_style": "Technical",
+    "service_type": "UX/UI Design",
+    "service_category": "UX/UI Design",
     "content": "Visual showcase of \"Toodo\" and \"Marquis Care\" mobile application interfaces.",
     "text": "UX/UI Portfolio Fintech / SaaS App-Centric. Mobile finance screens, \"Track every dollar\" UI. Visual showcase of \"Toodo\" and \"Marquis Care\" mobile application interfaces."
   },
@@ -696,6 +834,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Technical. CMYK/RGB color ramps and gray-scale swatches.",
     "visual_style": "Technical",
+    "service_type": "UX/UI Design - B2B",
+    "service_category": "UX/UI Design",
     "content": "Detailed \"EvergreenWealth\" color palette (Gray-900 to Taupe-100).",
     "text": "Color & Palette Branding / Design Technical. CMYK/RGB color ramps and gray-scale swatches. Detailed \"EvergreenWealth\" color palette (Gray-900 to Taupe-100)."
   },
@@ -706,6 +846,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "App-Centric. Dark mode, glowing mobile screens, card-based layouts.",
     "visual_style": "Futuristic",
+    "service_type": "UX/UI Design - B2B",
+    "service_category": "UX/UI Design",
     "content": "\"Track every dollar\": High-fidelity finance mobile UI showing activity feeds and transaction cards.",
     "text": "UX/UI Deep Dive Fintech / SaaS App-Centric. Dark mode, glowing mobile screens, card-based layouts. \"Track every dollar\": High-fidelity finance mobile UI showing activity feeds and transaction cards."
   },
@@ -716,6 +858,8 @@
     "industry": "Healthcare & HealthTech",
     "visual_style_raw": "Clean & Accessible. Soft shadows, medical red/blue accents, clear hierarchy.",
     "visual_style": "Wellness",
+    "service_type": "UX/UI Design - B2B",
+    "service_category": "UX/UI Design",
     "content": "Case study for \"Marquis Care\": Shows patient management dashboards and real-time messaging UI.",
     "text": "Healthcare UI HealthTech Clean & Accessible. Soft shadows, medical red/blue accents, clear hierarchy. Case study for \"Marquis Care\": Shows patient management dashboards and real-time messaging UI."
   },
@@ -726,6 +870,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Graphic & Iconic. Minimalist logo marks, monochrome variations.",
     "visual_style": "Minimalist",
+    "service_type": "UX/UI Design - B2B",
+    "service_category": "UX/UI Design",
     "content": "Showcases brand identities for \"Secludy\" and \"Sona Padel,\" including logo scaling and positioning guides.",
     "text": "Identity Systems Branding / Logo Graphic & Iconic. Minimalist logo marks, monochrome variations. Showcases brand identities for \"Secludy\" and \"Sona Padel,\" including logo scaling and positioning guides."
   },
@@ -736,6 +882,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Dynamic. Multiple frames showing animation transitions.",
     "visual_style": "Bold",
+    "service_type": "UX/UI Design - AI",
+    "service_category": "UX/UI Design",
     "content": "\"Prototyping & Animation\": Demonstrates how digital products feel in motion for user engagement.",
     "text": "Interaction Design Tech / Motion Dynamic. Multiple frames showing animation transitions. \"Prototyping & Animation\": Demonstrates how digital products feel in motion for user engagement."
   },
@@ -746,6 +894,8 @@
     "industry": "Venture Capital",
     "visual_style_raw": "Structured & Professional. Clean grid layouts, sophisticated serif titles.",
     "visual_style": "Luxury",
+    "service_type": "UX/UI Design - Consumer",
+    "service_category": "UX/UI Design",
     "content": "Deep dive into \"Investor Decks\": Layouts for \"Mm.ink\" and \"VVY\" showing complex data in a digestible format.",
     "text": "Information Design Corporate / VC Structured & Professional. Clean grid layouts, sophisticated serif titles. Deep dive into \"Investor Decks\": Layouts for \"Mm.ink\" and \"VVY\" showing complex data in a digestible format."
   },
@@ -756,6 +906,8 @@
     "industry": "Data & Analytics",
     "visual_style_raw": "Technical. Flowcharts, technical diagrams, and \"AI Generated Output\" screens.",
     "visual_style": "Technical",
+    "service_type": "UX/UI Design - Consumer",
+    "service_category": "UX/UI Design",
     "content": "\"General Video Reasoning\": Visualizing logic flows for developers and technical stakeholders.",
     "text": "Data Visualization Data / Analytics Technical. Flowcharts, technical diagrams, and \"AI Generated Output\" screens. \"General Video Reasoning\": Visualizing logic flows for developers and technical stakeholders."
   },
@@ -766,6 +918,8 @@
     "industry": "Travel & Hospitality",
     "visual_style_raw": "Vibrant & Action-Oriented. High-photography backgrounds, bold overlays.",
     "visual_style": "Playful",
+    "service_type": "UX/UI Audit",
+    "service_category": "UX/UI Design",
     "content": "\"PlayStay\" case study: \"All-in-one travel and ticketing\" UI for sports teams and large-scale event logistics.",
     "text": "Hospitality & Travel Travel / Event Tech Vibrant & Action-Oriented. High-photography backgrounds, bold overlays. \"PlayStay\" case study: \"All-in-one travel and ticketing\" UI for sports teams and large-scale event logistics."
   },
@@ -776,6 +930,8 @@
     "industry": "Venture Capital",
     "visual_style_raw": "Professional & Data-Driven. Clean white backgrounds, executive headshots, and logo grids of co-investors (Andreesen Horowitz, General Catalyst).",
     "visual_style": "Corporate",
+    "service_type": "Investor Deck - Finance",
+    "service_category": "Investor Deck",
     "content": "Investor deck for a $10M HealthTech fund. Includes fund thesis, portfolio markups (2x), and network maps of \"vetted backer\" communities.",
     "text": "Opal Fund 1 Venture Capital / HealthTech Professional & Data-Driven. Clean white backgrounds, executive headshots, and logo grids of co-investors (Andreesen Horowitz, General Catalyst). Investor deck for a $10M HealthTech fund. Includes fund thesis, portfolio markups (2x), and network maps of \"vetted backer\" communities."
   },
@@ -786,6 +942,8 @@
     "industry": "Mental Health & Wellness",
     "visual_style_raw": "Calming & Empathetic. Soft pastel palettes (sage green, muted peach), friendly serif typography, and lifestyle photography.",
     "visual_style": "Editorial",
+    "service_type": "Investor Deck - Finance",
+    "service_category": "Investor Deck",
     "content": "\"The Social Support Gold Standard\": Shows mobile app screens for peer support sessions, listener matching, and progress tracking.",
     "text": "Kindly (Kindly, Human) Mental Health / Social Support Calming & Empathetic. Soft pastel palettes (sage green, muted peach), friendly serif typography, and lifestyle photography. \"The Social Support Gold Standard\": Shows mobile app screens for peer support sessions, listener matching, and progress tracking."
   },
@@ -796,6 +954,8 @@
     "industry": "Healthcare & HealthTech",
     "visual_style_raw": "Clinical & Efficient. \"Healthcare Blue,\" clean sans-serif fonts, and professional UI dashboards.",
     "visual_style": "Corporate",
+    "service_type": "Investor Deck - Finance",
+    "service_category": "Investor Deck",
     "content": "Case study for a digital medical home. Features \"Virtual Care\" dashboards, provider profiles, and pharmacy integration interfaces.",
     "text": "Recuro Health Digital Health / Telemedicine Clinical & Efficient. \"Healthcare Blue,\" clean sans-serif fonts, and professional UI dashboards. Case study for a digital medical home. Features \"Virtual Care\" dashboards, provider profiles, and pharmacy integration interfaces."
   },
@@ -806,6 +966,8 @@
     "industry": "Mental Health & Wellness",
     "visual_style_raw": "Modern & Supportive. High-quality stock photography, approachable layouts, and progress-tracking UI.",
     "visual_style": "Wellness",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "Branding and UX for a sobriety platform. Shows \"Group Session\" scheduling, physician-led care descriptions, and community forum layouts.",
     "text": "Monument Wellness / Alcohol Recovery Modern & Supportive. High-quality stock photography, approachable layouts, and progress-tracking UI. Branding and UX for a sobriety platform. Shows \"Group Session\" scheduling, physician-led care descriptions, and community forum layouts."
   },
@@ -816,6 +978,8 @@
     "industry": "Fintech & Payments",
     "visual_style_raw": "Technical & Dark Mode. Deep navy backgrounds, neon accent colors, and complex algorithmic flowcharts.",
     "visual_style": "Futuristic",
+    "service_type": "Investor Deck - Companies",
+    "service_category": "Investor Deck",
     "content": "\"The Blueprint Strategy\": High-end technical UI for institutional investors. Shows portfolio management tools, order execution flows, and strategy customization panels.",
     "text": "Savvy Labs Institutional Fintech Technical & Dark Mode. Deep navy backgrounds, neon accent colors, and complex algorithmic flowcharts. \"The Blueprint Strategy\": High-end technical UI for institutional investors. Shows portfolio management tools, order execution flows, and strategy customization panels."
   },
@@ -826,6 +990,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Iconic & Minimalist. High-contrast black/white logo marks and typography pairings.",
     "visual_style": "Minimalist",
+    "service_type": "Investor Deck - Companies",
+    "service_category": "Investor Deck",
     "content": "A showcase of brand marks for firms like \"Apex,\" \"Savvy,\" and \"Markvector.\" Ideal for showing logo scalability and brand cohesion.",
     "text": "Identity Systems Branding / Logos Iconic & Minimalist. High-contrast black/white logo marks and typography pairings. A showcase of brand marks for firms like \"Apex,\" \"Savvy,\" and \"Markvector.\" Ideal for showing logo scalability and brand cohesion."
   },
@@ -836,6 +1002,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Functional & Informational. Mockups of browser windows, SEO keyword charts, and lighthouse speed scores.",
     "visual_style": "Playful",
+    "service_type": "Investor Deck - Healthcare",
+    "service_category": "Investor Deck",
     "content": "Explains the \"Webflow Development\" and \"SEO Strategy\" offerings, focusing on performance, speed, and responsive design.",
     "text": "Capabilities (Webflow & SEO) Web Development / Marketing Functional & Informational. Mockups of browser windows, SEO keyword charts, and lighthouse speed scores. Explains the \"Webflow Development\" and \"SEO Strategy\" offerings, focusing on performance, speed, and responsive design."
   },
@@ -846,6 +1014,8 @@
     "industry": "Operations & Logistics",
     "visual_style_raw": "Structured & Transparent. Comparison tables, pricing tiers, and engagement models.",
     "visual_style": "Corporate",
+    "service_type": "Packaging & Print",
+    "service_category": "Packaging & Print",
     "content": "Detailed breakdown of the \"Monthly Retainer\" ($12,500/mo) vs. \"Project-Based\" models. Includes scope of work for Brand, Web, and Product tracks.",
     "text": "Service Packages & Pricing Agency Operations Structured & Transparent. Comparison tables, pricing tiers, and engagement models. Detailed breakdown of the \"Monthly Retainer\" ($12,500/mo) vs. \"Project-Based\" models. Includes scope of work for Brand, Web, and Product tracks."
   },
@@ -856,6 +1026,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "UI-Focused. Clean white backgrounds with complex flowcharts and node-based process diagrams .",
     "visual_style": "Technical",
+    "service_type": "One Pager",
+    "service_category": "One Pager",
     "content": "Showcases the \"Program Manager\" and \"Company Staff\" user journeys for a hiring platform named \"Techsta\".",
     "text": "Product & App UX Hiring / SaaS UI-Focused. Clean white backgrounds with complex flowcharts and node-based process diagrams . Showcases the \"Program Manager\" and \"Company Staff\" user journeys for a hiring platform named \"Techsta\"."
   },
@@ -866,6 +1038,8 @@
     "industry": "Consumer & E-commerce",
     "visual_style_raw": "High-End Editorial. Minimalist typography, high-grain fashion photography, and a sophisticated black/white palette .",
     "visual_style": "Luxury",
+    "service_type": "Email Design",
+    "service_category": "Email Design",
     "content": "\"Embracing Minimalism\": Website mockups for a luxury apparel brand featuring featured blogs and \"Shop the Look\" interfaces .",
     "text": "Plush Luxury Retail / Fashion High-End Editorial. Minimalist typography, high-grain fashion photography, and a sophisticated black/white palette . \"Embracing Minimalism\": Website mockups for a luxury apparel brand featuring featured blogs and \"Shop the Look\" interfaces ."
   },
@@ -876,6 +1050,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "Data-Heavy. Dashboard UI with bar charts, conversion metrics, and \"Spam Blocked\" stats .",
     "visual_style": "Technical",
+    "service_type": "Email Design",
+    "service_category": "Email Design",
     "content": "Functional reporting for cold email outreach and form submission tracking.",
     "text": "Formspree / FuelToFly B2B SaaS Data-Heavy. Dashboard UI with bar charts, conversion metrics, and \"Spam Blocked\" stats . Functional reporting for cold email outreach and form submission tracking."
   },
@@ -886,6 +1062,8 @@
     "industry": "Mental Health & Wellness",
     "visual_style_raw": "Clean & Natural. Close-up photography of nature (moss, mushrooms), serif fonts, and an \"Aesthetic Wellness\" vibe .",
     "visual_style": "Wellness",
+    "service_type": "Social Post Design",
+    "service_category": "Social & Marketing",
     "content": "Educational content on \"Zinc\" and \"Microplastics 101.\" Features expert bios for Beth Kline, MD and David Harry Stewart.",
     "text": "Super Age Wellness / Longevity Clean & Natural. Close-up photography of nature (moss, mushrooms), serif fonts, and an \"Aesthetic Wellness\" vibe . Educational content on \"Zinc\" and \"Microplastics 101.\" Features expert bios for Beth Kline, MD and David Harry Stewart."
   },
@@ -896,6 +1074,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Futuristic & Airy. Vibrant photography of wind turbines and solar panels with blue/green overlays .",
     "visual_style": "Minimalist",
+    "service_type": "Social Post Design",
+    "service_category": "Social & Marketing",
     "content": "\"Renewable Horizon\": Data visualizations showing hydropower and solar energy impact through 2050.",
     "text": "Renewable Energy Energy / Sustainability Futuristic & Airy. Vibrant photography of wind turbines and solar panels with blue/green overlays . \"Renewable Horizon\": Data visualizations showing hydropower and solar energy impact through 2050."
   },
@@ -906,6 +1086,8 @@
     "industry": "Web3 & Crypto",
     "visual_style_raw": "Graphic & Tech. Bold yellow/black contrasts and token-powered challenge graphics .",
     "visual_style": "Bold",
+    "service_type": "Social Post Design",
+    "service_category": "Social & Marketing",
     "content": "Event branding and frameworks for founders bridging into Web3.",
     "text": "Livepeer / Limitless Web3 / Tech Graphic & Tech. Bold yellow/black contrasts and token-powered challenge graphics . Event branding and frameworks for founders bridging into Web3."
   },
@@ -916,6 +1098,8 @@
     "industry": "Consumer & E-commerce",
     "visual_style_raw": "Modern & Playful. Bubblegum pink and yellow accents with mobile mockups for \"Virtual Try-On\".",
     "visual_style": "Playful",
+    "service_type": "Social Post Design",
+    "service_category": "Social & Marketing",
     "content": "\"Revolutionize Your Inventory\": Marketing slides for AI-driven fashion trends and predictive stock analytics.",
     "text": "Fashion AI Retail Tech Modern & Playful. Bubblegum pink and yellow accents with mobile mockups for \"Virtual Try-On\". \"Revolutionize Your Inventory\": Marketing slides for AI-driven fashion trends and predictive stock analytics."
   },
@@ -926,6 +1110,8 @@
     "industry": "Healthcare & HealthTech",
     "visual_style_raw": "Corporate & Trustworthy. Illustrations of medical staff and blue/green healthcare color ramps .",
     "visual_style": "Corporate",
+    "service_type": "Marketing Misc",
+    "service_category": "Social & Marketing",
     "content": "\"Virtual Care\" welcome packets and AI medical agent efficiency data (20% more patients).",
     "text": "Arlo / Sully's AI HealthTech Corporate & Trustworthy. Illustrations of medical staff and blue/green healthcare color ramps . \"Virtual Care\" welcome packets and AI medical agent efficiency data (20% more patients)."
   },
@@ -936,6 +1122,8 @@
     "industry": "Healthcare & HealthTech",
     "visual_style_raw": "Informational. Text-heavy data slides with burnt orange headers and burnout rate charts .",
     "visual_style": "Corporate",
+    "service_type": "Marketing Misc",
+    "service_category": "Social & Marketing",
     "content": "\"The State of Healthcare\": Deep dive into physician shortages and the labor cost crisis.",
     "text": "Healthcare Crisis Healthcare / Policy Informational. Text-heavy data slides with burnt orange headers and burnout rate charts . \"The State of Healthcare\": Deep dive into physician shortages and the labor cost crisis."
   },
@@ -946,6 +1134,8 @@
     "industry": "Finance & Wealth Management",
     "visual_style_raw": "Premium Lifestyle. Editorial photography of sailboats and modern architecture.",
     "visual_style": "Luxury",
+    "service_type": "Whitepaper / eBook",
+    "service_category": "Content",
     "content": "Informational whitepaper layout on \"Lifetime Wealth\" and \"Tax-Loss Harvesting\".",
     "text": "EvergreenWealth Finance / Wealth Mgmt Premium Lifestyle. Editorial photography of sailboats and modern architecture. Informational whitepaper layout on \"Lifetime Wealth\" and \"Tax-Loss Harvesting\"."
   },
@@ -956,6 +1146,8 @@
     "industry": "Operations & Logistics",
     "visual_style_raw": "Structured. Detailed case studies for the San Diego Padres (ClickUp) and Ulta Beauty (WalkMe) .",
     "visual_style": "Corporate",
+    "service_type": "Whitepaper / eBook",
+    "service_category": "Content",
     "content": "Operational efficiency case studies focusing on suite renovations and inventory management .",
     "text": "Industry Reports Ops / Logistics Structured. Detailed case studies for the San Diego Padres (ClickUp) and Ulta Beauty (WalkMe) . Operational efficiency case studies focusing on suite renovations and inventory management ."
   },
@@ -966,6 +1158,8 @@
     "industry": "Data & Analytics",
     "visual_style_raw": "Abstract & Geometric. Geometric blue overlays and technical guides on \"Cookie-less Futures\" .",
     "visual_style": "Technical",
+    "service_type": "Content Writing",
+    "service_category": "Content",
     "content": "Whitepapers and guides for publishers on navigating the end of third-party cookies.",
     "text": "Marketing Reports Data / AdTech Abstract & Geometric. Geometric blue overlays and technical guides on \"Cookie-less Futures\" . Whitepapers and guides for publishers on navigating the end of third-party cookies."
   },
@@ -976,6 +1170,8 @@
     "industry": "Fashion & Apparel",
     "visual_style_raw": "Dynamic & Scenic. Sun-drenched photography of runners and trail landscapes .",
     "visual_style": "Editorial",
+    "service_type": "Sports",
+    "service_category": "Sports",
     "content": "\"Open Season\" campaign creative for Nike React Pegasus Trail 4 and ZoomX Zegama.",
     "text": "Nike Running Sports / Apparel Dynamic & Scenic. Sun-drenched photography of runners and trail landscapes . \"Open Season\" campaign creative for Nike React Pegasus Trail 4 and ZoomX Zegama."
   },
@@ -986,6 +1182,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Checklist-Style. Clean, list-based layouts .",
     "visual_style": "Corporate",
+    "service_type": "Content",
+    "service_category": "Content",
     "content": "Breakdown of SEO Technical Updates, Blog Content Packages, and Keyword Strategy .",
     "text": "SEO Offerings Agency Services Checklist-Style. Clean, list-based layouts . Breakdown of SEO Technical Updates, Blog Content Packages, and Keyword Strategy ."
   },
@@ -996,6 +1194,8 @@
     "industry": "Operations & Logistics",
     "visual_style_raw": "Methodical. Step-by-step phases (Discovery, Moodboarding, Stylescapes, Wireframing) .",
     "visual_style": "Corporate",
+    "service_type": "SEO & Content",
+    "service_category": "Content",
     "content": "A masterclass in how the agency delivers work. Includes actual \"Stylescape\" examples for investment firms.",
     "text": "Process Deep Dives Agency Operations Methodical. Step-by-step phases (Discovery, Moodboarding, Stylescapes, Wireframing) . A masterclass in how the agency delivers work. Includes actual \"Stylescape\" examples for investment firms."
   },
@@ -1006,6 +1206,8 @@
     "industry": "General Agency",
     "visual_style_raw": "Transparent. Detailed rate tables and scope descriptions .",
     "visual_style": "Corporate",
+    "service_type": "Landing Page",
+    "service_category": "Landing Page",
     "content": "Pricing for Investor Decks ($X,000), Embedded Teams, and Landing Page builds .",
     "text": "Pricing & Packages Business / Sales Transparent. Detailed rate tables and scope descriptions . Pricing for Investor Decks ($X,000), Embedded Teams, and Landing Page builds ."
   },
@@ -1016,6 +1218,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "Futuristic & Abstract. Purple gradients, geometric shapes.",
     "visual_style": "Futuristic",
+    "service_type": "Branding",
+    "service_category": "Branding",
     "content": "A grid of logo options for \"Card Retrieval\" and \"Abstracted Brain\" (Shield, Knot, Beaker, Nucleus).",
     "text": "Logo Concepts Tech / AI / Data Futuristic & Abstract. Purple gradients, geometric shapes. A grid of logo options for \"Card Retrieval\" and \"Abstracted Brain\" (Shield, Knot, Beaker, Nucleus)."
   },
@@ -1026,6 +1230,8 @@
     "industry": "Operations & Logistics",
     "visual_style_raw": "Structured. Organizational charts and team role icons .",
     "visual_style": "Corporate",
+    "service_type": "General",
+    "service_category": "General",
     "content": "Explains the \"One point of contact\" model and list of specialists (Creative Director, Visual Designers, Content Writer, Animator) .",
     "text": "Team & Workflow Operations Structured. Organizational charts and team role icons . Explains the \"One point of contact\" model and list of specialists (Creative Director, Visual Designers, Content Writer, Animator) ."
   },
@@ -1036,6 +1242,8 @@
     "industry": "AI & Technology",
     "visual_style_raw": "High-Tech & Authoritative. Neon accents on dark mode, performance metrics .",
     "visual_style": "Futuristic",
+    "service_type": "General",
+    "service_category": "General",
     "content": "\"Transform experts into trusted voices\": A full case study on video marketing outcomes, white-glove process, and demand generation flows .",
     "text": "cyber whyze Cybersecurity / AI High-Tech & Authoritative. Neon accents on dark mode, performance metrics . \"Transform experts into trusted voices\": A full case study on video marketing outcomes, white-glove process, and demand generation flows ."
   },
@@ -1046,6 +1254,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "Vibrant & Accessible. Soft purple/pink gradients, mobile video UI .",
     "visual_style": "Futuristic",
+    "service_type": "General",
+    "service_category": "General",
     "content": "\"Beautiful Job Ads\": Product UI for turning job descriptions into video ads, featuring Ambassador Networks and LinkedIn sharing .",
     "text": "Lumina HR Tech / SaaS Vibrant & Accessible. Soft purple/pink gradients, mobile video UI . \"Beautiful Job Ads\": Product UI for turning job descriptions into video ads, featuring Ambassador Networks and LinkedIn sharing ."
   },
@@ -1056,6 +1266,8 @@
     "industry": "Maritime",
     "visual_style_raw": "Industrial & Deep Sea. Forest green and navy palette, VISA card mockups.",
     "visual_style": "Corporate",
+    "service_type": "General",
+    "service_category": "General",
     "content": "\"The only payroll made for maritime\": Shows digital wallets, worker pay tracking, and streamlined onboarding UI.",
     "text": "SeaFare Maritime / Payroll Industrial & Deep Sea. Forest green and navy palette, VISA card mockups. \"The only payroll made for maritime\": Shows digital wallets, worker pay tracking, and streamlined onboarding UI."
   },
@@ -1066,6 +1278,8 @@
     "industry": "Sports & Athletics",
     "visual_style_raw": "Institutional & Bold. Stadium imagery, high-conviction typography.",
     "visual_style": "Corporate",
+    "service_type": "General",
+    "service_category": "General",
     "content": "\"WHO WE ARE\": Sports investment and advisory strategy focusing on North American pro teams and private capital.",
     "text": "Atlas Holdings Sports / Finance Institutional & Bold. Stadium imagery, high-conviction typography. \"WHO WE ARE\": Sports investment and advisory strategy focusing on North American pro teams and private capital."
   },
@@ -1076,6 +1290,8 @@
     "industry": "B2B SaaS",
     "visual_style_raw": "Business Professional. Clean dashboard UI, Slack and Salesforce integration icons.",
     "visual_style": "Corporate",
+    "service_type": "UX/UI Design",
+    "service_category": "UX/UI Design",
     "content": "\"Unlock winning tribal knowledge\": UI for capturing lessons learned and turning them into revenue-generating playbooks.",
     "text": "Kawin Knowledge Mgmt Business Professional. Clean dashboard UI, Slack and Salesforce integration icons. \"Unlock winning tribal knowledge\": UI for capturing lessons learned and turning them into revenue-generating playbooks."
   },
@@ -1086,6 +1302,8 @@
     "industry": "Education & EdTech",
     "visual_style_raw": "Bright & Educational. Lime green and white palette, social-media style feeds .",
     "visual_style": "Playful",
+    "service_type": "UX/UI Design",
+    "service_category": "UX/UI Design",
     "content": "\"Welcome back, Sophia\": Mobile app UI for finding programs, calculating GPA, and resume/essay preparation for CRNA school .",
     "text": "The CRNA Club EdTech / Nursing Bright & Educational. Lime green and white palette, social-media style feeds . \"Welcome back, Sophia\": Mobile app UI for finding programs, calculating GPA, and resume/essay preparation for CRNA school ."
   },
@@ -1096,6 +1314,8 @@
     "industry": "Education & EdTech",
     "visual_style_raw": "Clean & Practical. Blue/white school management UI, calendar views .",
     "visual_style": "Corporate",
+    "service_type": "General",
+    "service_category": "General",
     "content": "\"Catholic Diocese of Cleveland\" portal: Shows student assignments, financial alerts, and resource library search results .",
     "text": "Digital Academy Education / Admin Clean & Practical. Blue/white school management UI, calendar views . \"Catholic Diocese of Cleveland\" portal: Shows student assignments, financial alerts, and resource library search results ."
   },
@@ -1106,6 +1326,8 @@
     "industry": "HR Tech",
     "visual_style_raw": "Professional & Modern. Profile cards, traction data visualization .",
     "visual_style": "Corporate",
+    "service_type": "General",
+    "service_category": "General",
     "content": "\"A force multiplier for companies\": A platform for hiring fractional CXOs. Shows user profiles, traction stats (1,000+ candidates), and growth charts .",
     "text": "m.ink HR / Fractional Professional & Modern. Profile cards, traction data visualization . \"A force multiplier for companies\": A platform for hiring fractional CXOs. Shows user profiles, traction stats (1,000+ candidates), and growth charts ."
   },
@@ -1116,6 +1338,8 @@
     "industry": "Fashion & Apparel",
     "visual_style_raw": "Lifestyle. Gridded web layouts with high-quality beach/surf imagery.",
     "visual_style": "Editorial",
+    "service_type": "Landing Page",
+    "service_category": "Landing Page",
     "content": "\"Next Drop Incoming\": Website and email marketing layouts for a limited-run apparel collection.",
     "text": "Nonchalant Fashion / Apparel Lifestyle. Gridded web layouts with high-quality beach/surf imagery. \"Next Drop Incoming\": Website and email marketing layouts for a limited-run apparel collection."
   },
@@ -1126,6 +1350,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Soft Sophistication. Warm neutrals, blush, sage greens; West Elm-inspired.",
     "visual_style": "Wellness",
+    "service_type": "General",
+    "service_category": "General",
     "content": "A strategic \"Visual Approach\" guide showing typography (EB Garamond), color palettes, and layout philosophy.",
     "text": "Stylescape: Sohva Branding Soft Sophistication. Warm neutrals, blush, sage greens; West Elm-inspired. A strategic \"Visual Approach\" guide showing typography (EB Garamond), color palettes, and layout philosophy."
   },
@@ -1136,6 +1362,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Expressive Minimalism. Deep pastels, Ghia-inspired framing, organic shapes.",
     "visual_style": "Minimalist",
+    "service_type": "General",
+    "service_category": "General",
     "content": "Alternative creative direction focusing on unconventional edges and \"Intentional Growth\".",
     "text": "Stylescape: Sohva Branding Expressive Minimalism. Deep pastels, Ghia-inspired framing, organic shapes. Alternative creative direction focusing on unconventional edges and \"Intentional Growth\"."
   },
@@ -1146,6 +1374,8 @@
     "industry": "Branding & Design",
     "visual_style_raw": "Warm Modern Classic. Earthy tones (taupe, gold, ochre), elegant serif fonts.",
     "visual_style": "Luxury",
+    "service_type": "General",
+    "service_category": "General",
     "content": "Creative direction blending clean elegance with \"Warmth and Natural Sophistication\".",
     "text": "Stylescape: Sohva Branding Warm Modern Classic. Earthy tones (taupe, gold, ochre), elegant serif fonts. Creative direction blending clean elegance with \"Warmth and Natural Sophistication\"."
   },
@@ -1156,6 +1386,8 @@
     "industry": "Healthcare & HealthTech",
     "visual_style_raw": "Sleek & Medical. Light blue gradients, complex data summary charts .",
     "visual_style": "Futuristic",
+    "service_type": "General",
+    "service_category": "General",
     "content": "\"From 100 pages to one\": UI showing how AI compresses medical records into structured clinician summaries for EHR charts .",
     "text": "Connective Health Health Data Sleek & Medical. Light blue gradients, complex data summary charts . \"From 100 pages to one\": UI showing how AI compresses medical records into structured clinician summaries for EHR charts ."
   },
@@ -1166,6 +1398,8 @@
     "industry": "Consumer & E-commerce",
     "visual_style_raw": "Dynamic & High-Energy. Collage of UGC ads, Instagram stories, and video stills.",
     "visual_style": "Bold",
+    "service_type": "Social & Marketing",
+    "service_category": "Social & Marketing",
     "content": "\"Rapid Creative Testing\": Shows social ad creative for brands like Savage X Fenty and Apostrophe.",
     "text": "Paid Media / Ads Retail / DTC Dynamic & High-Energy. Collage of UGC ads, Instagram stories, and video stills. \"Rapid Creative Testing\": Shows social ad creative for brands like Savage X Fenty and Apostrophe."
   }

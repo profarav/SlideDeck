@@ -29,6 +29,7 @@ def run_query(description: str, n_results: int, verbose: bool = False):
     persona = build_search_persona(description)
 
     print(f"  ✓ Industries matched:  {', '.join(persona['industries'])}")
+    print(f"  ✓ Work type:           {', '.join(persona.get('service_categories', []))}")
     print(f"  ✓ Visual style:        {persona['visual_style']}")
     print(f"  ✓ Search query:        {persona['search_query']}")
     if verbose:
@@ -41,14 +42,14 @@ def run_query(description: str, n_results: int, verbose: bool = False):
         print("  ✗ No matching slides found.")
         return
 
-    print(f"  {'#':<6} {'SLIDE':>8}  {'CLIENT':<22} {'INDUSTRY':<30} {'STYLE':<14} SCORE")
-    print(f"  {'─'*6} {'─'*8}  {'─'*22} {'─'*30} {'─'*14} {'─'*5}")
+    print(f"  {'#':<5} {'SLIDE':>8}  {'CLIENT':<20} {'WORK TYPE':<28} {'INDUSTRY':<26} SCORE")
+    print(f"  {'─'*5} {'─'*8}  {'─'*20} {'─'*28} {'─'*26} {'─'*5}")
     for i, s in enumerate(slides, 1):
         print(
-            f"  {i:<6} {s['slide_number']:>8}  "
-            f"{s['client'][:22]:<22} "
-            f"{s['industry'][:30]:<30} "
-            f"{s['visual_style']:<14} "
+            f"  {i:<5} {s['slide_number']:>8}  "
+            f"{s['client'][:20]:<20} "
+            f"{s.get('service_type', '?')[:28]:<28} "
+            f"{s['industry'][:26]:<26} "
             f"{s['score']:.3f}"
         )
 

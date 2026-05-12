@@ -257,6 +257,12 @@
       border: 1px solid rgba(124, 111, 255, 0.25);
       color: var(--accent2);
     }
+    .tag-service {
+      font-size: 11px; padding: 3px 9px; border-radius: 20px;
+      background: rgba(251, 146, 60, 0.1);
+      border: 1px solid rgba(251, 146, 60, 0.3);
+      color: #fb923c;
+    }
 
     /* Score bar */
     .score-row { display: flex; align-items: center; gap: 10px; }
@@ -368,6 +374,10 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
         <span class="persona-value" id="personaIndustries"></span>
       </div>
       <div class="persona-row">
+        <span class="persona-label">Work Type</span>
+        <span class="persona-value" id="personaServiceCategories"></span>
+      </div>
+      <div class="persona-row">
         <span class="persona-label">Visual Style</span>
         <span class="persona-value" id="personaStyle"></span>
       </div>
@@ -450,6 +460,8 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     // Persona card
     document.getElementById('personaIndustries').innerHTML =
       persona.industries.map(i => `<span class="tag">${i}</span>`).join('');
+    document.getElementById('personaServiceCategories').innerHTML =
+      (persona.service_categories || []).map(t => `<span class="tag" style="background:rgba(251,146,60,0.15);border-color:rgba(251,146,60,0.35);color:#fb923c">${t}</span>`).join('');
     document.getElementById('personaStyle').innerHTML = `<span class="tag">${persona.visual_style}</span>`;
     document.getElementById('personaQuery').textContent = persona.search_query;
     document.getElementById('personaReasoning').textContent = persona.reasoning;
@@ -479,6 +491,7 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
           <div class="content-text">${escHtml(slide.content)}</div>
           <div class="card-tags">
             <span class="tag-industry">${escHtml(slide.industry)}</span>
+            <span class="tag-service">${escHtml(slide.service_type)}</span>
             <span class="tag-style">${escHtml(slide.visual_style)}</span>
           </div>
           <div class="score-row">

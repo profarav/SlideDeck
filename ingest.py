@@ -9,10 +9,11 @@ Run once (or whenever the sheet changes):
 import argparse
 import json
 import re
+from pathlib import Path
 import openpyxl
-from tags import normalize_industry, normalize_visual_style
+from tags import normalize_industry, normalize_visual_style, get_service_tags
 
-INDEX_PATH = "./slide_index.json"
+INDEX_PATH = str(Path(__file__).parent / "slide_index.json")
 
 _HEADER_VALUES = {
     "slide #", "client / project", "category", "service", "appendix intro",
@@ -73,6 +74,8 @@ def load_slides(xlsx_path: str) -> list[dict]:
         content = re.sub(r"\s*\+\d+\s*$", "", content).strip()
         visual_raw = re.sub(r"\s*\+\d+\s*$", "", visual_raw).strip()
 
+        service_type, service_category = get_service_tags(slide_num, content, visual_raw)
+
         slides.append({
             "slide_number": slide_num,
             "client": client,
@@ -80,6 +83,8 @@ def load_slides(xlsx_path: str) -> list[dict]:
             "industry": normalize_industry(f"{client} {industry_raw}"),
             "visual_style_raw": visual_raw,
             "visual_style": normalize_visual_style(visual_raw),
+            "service_type": service_type,
+            "service_category": service_category,
             "content": content,
             # Combined text blob used for TF-IDF and Claude ranking
             "text": f"{client} {industry_raw} {visual_raw} {content}",

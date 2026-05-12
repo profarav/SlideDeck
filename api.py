@@ -5,13 +5,18 @@ Start with:
     uvicorn api:app --reload --port 8000
 """
 
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from profiler import build_search_persona
 from retriever import retrieve_case_studies
+
+_BASE = Path(__file__).parent
+_STATIC_DIR = _BASE / "static"
+_INDEX_HTML = _STATIC_DIR / "index.html"
 
 app = FastAPI(title="Klimt Slide Retrieval Engine", version="1.0")
 
@@ -22,12 +27,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Only mount static if directory exists (it won't be present in Vercel serverless)
+if _STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 
 @app.get("/")
 def serve_ui():
-    return FileResponse("static/index.html")
+    if _INDEX_HTML.exists():
+        return FileResponse(str(_INDEX_HTML))
+    return HTMLResponse("<h1>Klimt Slide Engine</h1><p>UI not found.</p>")
 
 
 class ProspectRequest(BaseModel):
@@ -40,6 +49,8 @@ class SlideResult(BaseModel):
     client: str
     industry: str
     visual_style: str
+    service_type: str
+    service_category: str
     content: str
     score: float
 

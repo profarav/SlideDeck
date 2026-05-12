@@ -1,18 +1,19 @@
 """
-Retriever — two-stage pipeline:
-  Stage 1: Hard metadata filter (industry tags)
-  Stage 2: TF-IDF pre-rank → Claude final ranking
-
-No vector DB or model download required.
+Retriever — three-dimension pipeline:
+  Stage 1: Hard metadata filter (industry + service_category) with 5-level fallback
+  Stage 2: Keyword pre-rank → Claude final ranking
 """
 
 import json
 import os
+import re as _re
+from pathlib import Path
+
 import anthropic
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 
 from ingest import INDEX_PATH
+
+VISION_INDEX_PATH = str(Path(__file__).parent / "vision_index.json")
 
 _slides_cache: list[dict] | None = None
 
@@ -20,46 +21,69 @@ _slides_cache: list[dict] | None = None
 def _load_slides() -> list[dict]:
     global _slides_cache
     if _slides_cache is None:
-        with open(INDEX_PATH) as f:
+        # Prefer vision index (per-slide accuracy) over the sheet-based index
+        path = VISION_INDEX_PATH if os.path.exists(VISION_INDEX_PATH) else INDEX_PATH
+        with open(path) as f:
             _slides_cache = json.load(f)
     return _slides_cache
 
 
-def _tfidf_rank(query: str, candidates: list[dict], top_n: int) -> list[dict]:
-    """Fast TF-IDF pre-filter to trim candidate list before Claude ranking."""
+def _keyword_rank(query: str, candidates: list[dict], top_n: int) -> list[dict]:
+    """
+    Fast keyword pre-filter to trim candidate list before Claude ranking.
+    Scores each candidate by counting how many query tokens appear in its text blob.
+    No external dependencies — pure Python, safe for Vercel's 250 MB limit.
+    """
     if len(candidates) <= top_n:
         return candidates
-    texts = [c["text"] for c in candidates]
-    vec = TfidfVectorizer(stop_words="english")
-    matrix = vec.fit_transform(texts + [query])
-    scores = cosine_similarity(matrix[-1], matrix[:-1])[0]
-    ranked_idx = scores.argsort()[::-1][:top_n]
-    return [candidates[i] for i in ranked_idx]
+
+    tokens = set(_re.findall(r"[a-z]+", query.lower()))
+    # Remove common stopwords
+    stopwords = {"a", "an", "the", "for", "of", "in", "on", "and", "or", "to", "with", "is", "are", "that", "this", "we", "our"}
+    tokens -= stopwords
+
+    def _score(c: dict) -> int:
+        blob = c.get("text", "").lower()
+        return sum(1 for t in tokens if t in blob)
+
+    scored = sorted(candidates, key=_score, reverse=True)
+    return scored[:top_n]
 
 
-def _claude_rank(query: str, candidates: list[dict], visual_style: str, n: int) -> list[dict]:
+def _claude_rank(
+    query: str,
+    candidates: list[dict],
+    visual_style: str,
+    service_categories: list[str],
+    n: int,
+) -> list[dict]:
     """Ask Claude to pick and order the most relevant slides from the candidate list."""
     api_key = os.getenv("ANTHROPIC_API_KEY")
     client = anthropic.Anthropic(api_key=api_key)
 
     slide_list = "\n".join(
-        f"[{i}] Slides {c['slide_number']} | {c['client']} ({c['industry_raw']}) "
-        f"| Style: {c['visual_style_raw'][:60]} | {c['content'][:120]}"
+        f"[{i}] Slide {c['slide_number']} | {c['client']} ({c.get('industry_raw', c.get('industry', ''))}) "
+        f"| Type: {c.get('service_type', '?')} "
+        f"| Style: {c.get('visual_style_raw', c.get('visual_style', ''))[:50]} | {c['content'][:100]}"
         for i, c in enumerate(candidates)
     )
 
+    service_str = ", ".join(service_categories) if service_categories else "Not specified"
+
     prompt = f"""You are a creative agency business development analyst for Klimt & Design.
 
-A salesperson is building a pitch deck and needs the {n} most relevant case study slides to show a prospect.
+A salesperson is building a pitch deck and needs the {n} most relevant case study slides.
 
 Prospect needs: {query}
+Required work type: {service_str}
 Preferred visual style: {visual_style}
 
 Available slides:
 {slide_list}
 
-Return ONLY a JSON array of the {n} best slide indices (0-based, from the list above), ordered best-first.
-Prioritize: (1) industry match, (2) content relevance, (3) visual style match.
+Return ONLY a JSON array of the {n} best slide indices (0-based), ordered best-first.
+Prioritize: (1) work type match — only show slides demonstrating the TYPE OF WORK needed,
+(2) industry match, (3) content relevance, (4) visual style match.
 Example: [2, 0, 4, 1, 3]
 Return only the JSON array, nothing else."""
 
@@ -70,12 +94,15 @@ Return only the JSON array, nothing else."""
     )
 
     raw = msg.content[0].text.strip()
-    # Strip markdown fences if present
     if raw.startswith("```"):
         raw = raw.split("```")[1].lstrip("json").strip()
 
+    # Extract only the JSON array, ignoring any extra text Claude might add
+    arr_match = _re.search(r"\[[\d,\s]+\]", raw)
+    if arr_match:
+        raw = arr_match.group(0)
+
     indices = json.loads(raw)
-    # Guard against out-of-range indices
     valid = [i for i in indices if isinstance(i, int) and 0 <= i < len(candidates)]
     total = len(valid)
     results = []
@@ -88,34 +115,63 @@ Return only the JSON array, nothing else."""
 
 def retrieve_case_studies(persona: dict, n_results: int = 8) -> list[dict]:
     """
-    Full retrieval pipeline:
-      1. Load all slides from the JSON index.
-      2. Hard filter by matched industries (fall back to General Agency if < 3 hits).
-      3. TF-IDF pre-rank to top-20 candidates.
-      4. Claude final ranking to top n_results.
+    Full retrieval pipeline with 5-level fallback:
+      Level 1: industry ∩ service_category  (tightest — both match)
+      Level 2: service_category only        (right work type beats right industry)
+      Level 3: industry only                (drop service_category constraint)
+      Level 4: General Agency slides        (agency overview fallback)
+      Level 5: entire library               (last resort)
     """
     slides = _load_slides()
     industries: list[str] = persona["industries"]
     query: str = persona["search_query"]
     visual_style: str = persona["visual_style"]
+    service_categories: list[str] = persona.get("service_categories", [])
 
-    # ── Stage 1: industry filter ───────────────────────────────────────────────
-    filtered = [s for s in slides if s["industry"] in industries]
+    # ── Level 1: industry + service_category (perfect match) ──────────────────
+    filtered = [
+        s for s in slides
+        if s["industry"] in industries
+        and s.get("service_category") in service_categories
+    ]
 
-    # Fallback: if too few, add General Agency slides
-    if len(filtered) < 3:
-        general = [s for s in slides if s["industry"] == "General Agency"]
+    # ── Level 2: service_category only ────────────────────────────────────────
+    # Right work type from any industry beats wrong work type from right industry.
+    if len(filtered) < 3 and service_categories:
         seen = {s["slide_number"] for s in filtered}
-        filtered += [s for s in general if s["slide_number"] not in seen]
+        filtered += [
+            s for s in slides
+            if s.get("service_category") in service_categories
+            and s["slide_number"] not in seen
+        ]
 
-    # If still nothing, use everything
+    # ── Level 3: industry only ─────────────────────────────────────────────────
+    if len(filtered) < 3:
+        seen = {s["slide_number"] for s in filtered}
+        filtered += [s for s in slides if s["industry"] in industries and s["slide_number"] not in seen]
+
+    # ── Level 4: General Agency fallback ──────────────────────────────────────
+    if len(filtered) < 3:
+        seen = {s["slide_number"] for s in filtered}
+        filtered += [s for s in slides if s["industry"] == "General Agency" and s["slide_number"] not in seen]
+
+    # ── Level 5: entire library ────────────────────────────────────────────────
     if not filtered:
         filtered = slides
 
-    # ── Stage 2: TF-IDF pre-rank (keep top 20 for Claude) ─────────────────────
-    candidates = _tfidf_rank(query, filtered, top_n=min(20, len(filtered)))
+    # Deduplicate filtered list by slide_number before ranking
+    seen_nums: set[str] = set()
+    deduped: list[dict] = []
+    for s in filtered:
+        if s["slide_number"] not in seen_nums:
+            seen_nums.add(s["slide_number"])
+            deduped.append(s)
+    filtered = deduped
+
+    # ── Stage 2: Keyword pre-rank (keep top 20 for Claude) ────────────────────
+    candidates = _keyword_rank(query, filtered, top_n=min(20, len(filtered)))
 
     # ── Stage 3: Claude final ranking ─────────────────────────────────────────
-    ranked = _claude_rank(query, candidates, visual_style, n=n_results)
+    ranked = _claude_rank(query, candidates, visual_style, service_categories, n=n_results)
 
     return ranked
