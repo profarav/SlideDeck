@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Klimt Slide Engine</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f0f11;
+      --surface:  #18181c;
+      --border:   #2a2a30;
+      --accent:   #7c6fff;
+      --accent2:  #a78bfa;
+      --text:     #e8e8f0;
+      --muted:    #6b6b7e;
+      --success:  #34d399;
+      --card-bg:  #1e1e24;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    header {
+      padding: 24px 40px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 16px; color: #fff;
+    }
+    header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+    header span { font-size: 13px; color: var(--muted); margin-left: 6px; }
+
+    /* ── Main layout ─────────────────────────────────── */
+    main {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 0;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ── Input panel ─────────────────────────────────── */
+    .input-panel {
+      padding: 32px 28px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: sticky;
+      top: 0;
+      height: calc(100vh - 73px);
+      overflow-y: auto;
+    }
+
+    .input-panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+
+    textarea {
+      width: 100%;
+      height: 180px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 14px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--muted); }
+
+    .controls { display: flex; align-items: center; gap: 12px; }
+
+    .n-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+    .n-input {
+      width: 60px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 14px;
+      padding: 8px 10px;
+      outline: none;
+      text-align: center;
+    }
+    .n-input:focus { border-color: var(--accent); }
+
+    .btn {
+      flex: 1;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* Spinner */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .btn.loading .spinner { display: block; }
+    .btn.loading .btn-text { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Example prompts */
+    .examples h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 10px; }
+    .example-chip {
+      display: block; width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 10px 12px;
+      cursor: pointer;
+      text-align: left;
+      margin-bottom: 8px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .example-chip:hover { border-color: var(--accent); background: #22222a; }
+
+    /* ── Results panel ───────────────────────────────── */
+    .results-panel {
+      padding: 32px 36px;
+      overflow-y: auto;
+    }
+
+    /* Persona card */
+    .persona-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      display: none;
+    }
+    .persona-card.visible { display: block; }
+    .persona-card h3 {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--accent2); margin-bottom: 14px;
+    }
+    .persona-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+    .persona-label { font-size: 12px; color: var(--muted); width: 120px; flex-shrink: 0; }
+    .persona-value { font-size: 13px; color: var(--text); line-height: 1.5; }
+    .tag {
+      display: inline-block;
+      background: rgba(124, 111, 255, 0.15);
+      border: 1px solid rgba(124, 111, 255, 0.3);
+      color: var(--accent2);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 12px;
+      margin: 2px 3px 2px 0;
+    }
+
+    /* Results header */
+    .results-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .results-header.visible { display: flex; }
+    .results-header h2 { font-size: 14px; font-weight: 600; }
+    .slide-numbers-badge {
+      font-size: 12px; color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .slide-numbers-badge:hover { border-color: var(--accent); color: var(--text); }
+
+    /* Slide cards grid */
+    .slides-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .slide-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.15s, transform 0.1s;
+      animation: fadeUp 0.3s ease both;
+    }
+    .slide-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-top { display: flex; align-items: center; justify-content: space-between; }
+    .rank-badge {
+      font-size: 11px; color: var(--muted);
+      background: var(--surface);
+      border-radius: 6px;
+      padding: 3px 8px;
+    }
+    .slide-num {
+      font-size: 22px; font-weight: 700;
+      color: var(--accent2);
+      letter-spacing: -0.5px;
+    }
+
+    .client-name { font-size: 15px; font-weight: 600; color: var(--text); }
+    .content-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag-industry {
+      font-size: 11px; padding: 3px 9px; border-radius: 20px;
+      background: rgba(52, 211, 153, 0.1);
+      border: 1px solid rgba(52, 211, 153, 0.25);
+      color: var(--success);
+    }
+    .tag-style {
+      font-size: 11px; padding: 3px 9px; border-radius: 20px;
+      background: rgba(124, 111, 255, 0.1);
+      border: 1px solid rgba(124, 111, 255, 0.25);
+      color: var(--accent2);
+    }
+
+    /* Score bar */
+    .score-row { display: flex; align-items: center; gap: 10px; }
+    .score-bar-bg {
+      flex: 1; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.6s ease;
+    }
+    .score-text { font-size: 11px; color: var(--muted); width: 36px; text-align: right; }
+
+    /* Empty / error states */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 60vh; gap: 14px; color: var(--muted); text-align: center;
+    }
+    .empty-icon { font-size: 48px; opacity: 0.3; }
+    .empty-state p { font-size: 14px; line-height: 1.6; max-width: 320px; }
+
+    .error-banner {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+    }
+    .error-banner.visible { display: block; }
+
+    /* Copy toast */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 800px) {
+      main { grid-template-columns: 1fr; }
+      .input-panel { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">K</div>
+  <h1>Klimt Slide Engine <span>— Case Study Finder</span></h1>
+</header>
+
+<main>
+  <!-- ── Input Panel ── -->
+  <aside class="input-panel">
+    <h2>Prospect Description</h2>
+
+    <textarea id="prospect" placeholder="Describe the prospect in plain English…
+
+e.g. 'We're pitching to a Series B fintech startup building embedded payments for e-commerce. They have a modern, clean brand and need help with their investor deck.'"></textarea>
+
+    <div class="controls">
+      <span class="n-label">Show</span>
+      <input class="n-input" id="nResults" type="number" value="6" min="1" max="20" />
+      <span class="n-label">slides</span>
+      <button class="btn" id="searchBtn" onclick="runSearch()">
+        <div class="spinner"></div>
+        <span class="btn-text">Find Slides</span>
+      </button>
+    </div>
+
+    <div id="errorBanner" class="error-banner"></div>
+
+    <div class="examples">
+      <h3>Try an example</h3>
+      <button class="example-chip" onclick="setExample(this)">Luxury wealth management firm targeting ultra-high-net-worth individuals. Dark, elegant brand.</button>
+      <button class="example-chip" onclick="setExample(this)">B2B fintech startup building payment infrastructure for small businesses. Clean, modern tech aesthetic.</button>
+      <button class="example-chip" onclick="setExample(this)">AI developer tools company helping engineers with prompt engineering and LLM evaluation.</button>
+      <button class="example-chip" onclick="setExample(this)">Sustainable direct-to-consumer apparel brand focused on eco-friendly fashion drops.</button>
+      <button class="example-chip" onclick="setExample(this)">Series A healthtech startup building virtual care and telemedicine for patients.</button>
+    </div>
+  </aside>
+
+  <!-- ── Results Panel ── -->
+  <section class="results-panel" id="resultsPanel">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🔍</div>
+      <p>Describe your prospect and hit <strong>Find Slides</strong> to pull the best matching case studies.</p>
+    </div>
+
+    <div class="persona-card" id="personaCard">
+      <h3>Search Persona</h3>
+      <div class="persona-row">
+        <span class="persona-label">Industries</span>
+        <span class="persona-value" id="personaIndustries"></span>
+      </div>
+      <div class="persona-row">
+        <span class="persona-label">Visual Style</span>
+        <span class="persona-value" id="personaStyle"></span>
+      </div>
+      <div class="persona-row">
+        <span class="persona-label">Search Query</span>
+        <span class="persona-value" id="personaQuery"></span>
+      </div>
+      <div class="persona-row">
+        <span class="persona-label">Reasoning</span>
+        <span class="persona-value" id="personaReasoning"></span>
+      </div>
+    </div>
+
+    <div class="results-header" id="resultsHeader">
+      <h2 id="resultsTitle">Matched Slides</h2>
+      <button class="slide-numbers-badge" id="copyBtn" onclick="copySlideNumbers()">📋 Copy slide numbers</button>
+    </div>
+
+    <div class="slides-grid" id="slidesGrid"></div>
+  </section>
+</main>
+
+<div class="toast" id="toast">Slide numbers copied!</div>
+
+<script>
+  let lastSlideNumbers = [];
+
+  function setExample(btn) {
+    document.getElementById('prospect').value = btn.textContent.trim();
+    document.getElementById('prospect').focus();
+  }
+
+  async function runSearch() {
+    const description = document.getElementById('prospect').value.trim();
+    const nResults = parseInt(document.getElementById('nResults').value) || 6;
+    const btn = document.getElementById('searchBtn');
+    const errorBanner = document.getElementById('errorBanner');
+
+    if (!description) {
+      document.getElementById('prospect').focus();
+      return;
+    }
+
+    // Loading state
+    btn.disabled = true;
+    btn.classList.add('loading');
+    errorBanner.classList.remove('visible');
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('personaCard').classList.remove('visible');
+    document.getElementById('resultsHeader').classList.remove('visible');
+    document.getElementById('slidesGrid').innerHTML = '';
+
+    try {
+      const res = await fetch('/generate-deck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description, n_results: nResults }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'Server error');
+      }
+
+      const data = await res.json();
+      renderResults(data);
+    } catch (err) {
+      errorBanner.textContent = '⚠ ' + err.message;
+      errorBanner.classList.add('visible');
+      document.getElementById('emptyState').style.display = 'flex';
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+  }
+
+  function renderResults(data) {
+    const { persona, slides } = data;
+
+    // Persona card
+    document.getElementById('personaIndustries').innerHTML =
+      persona.industries.map(i => `<span class="tag">${i}</span>`).join('');
+    document.getElementById('personaStyle').innerHTML = `<span class="tag">${persona.visual_style}</span>`;
+    document.getElementById('personaQuery').textContent = persona.search_query;
+    document.getElementById('personaReasoning').textContent = persona.reasoning;
+    document.getElementById('personaCard').classList.add('visible');
+
+    // Results header
+    document.getElementById('resultsTitle').textContent =
+      `${slides.length} Case Stud${slides.length === 1 ? 'y' : 'ies'} Found`;
+    document.getElementById('resultsHeader').classList.add('visible');
+
+    // Store for copy
+    lastSlideNumbers = slides.map(s => s.slide_number);
+
+    // Render cards
+    const grid = document.getElementById('slidesGrid');
+    grid.innerHTML = '';
+    slides.forEach((slide, idx) => {
+      const delay = idx * 60;
+      const scorePercent = Math.round(slide.score * 100);
+      grid.innerHTML += `
+        <div class="slide-card" style="animation-delay:${delay}ms">
+          <div class="card-top">
+            <span class="rank-badge">#${idx + 1}</span>
+            <span class="slide-num">${slide.slide_number}</span>
+          </div>
+          <div class="client-name">${escHtml(slide.client)}</div>
+          <div class="content-text">${escHtml(slide.content)}</div>
+          <div class="card-tags">
+            <span class="tag-industry">${escHtml(slide.industry)}</span>
+            <span class="tag-style">${escHtml(slide.visual_style)}</span>
+          </div>
+          <div class="score-row">
+            <div class="score-bar-bg">
+              <div class="score-bar-fill" style="width:${scorePercent}%"></div>
+            </div>
+            <span class="score-text">${scorePercent}%</span>
+          </div>
+        </div>`;
+    });
+  }
+
+  function copySlideNumbers() {
+    if (!lastSlideNumbers.length) return;
+    navigator.clipboard.writeText(lastSlideNumbers.join(', ')).then(() => {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    });
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // Submit on Cmd/Ctrl+Enter
+  document.getElementById('prospect').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runSearch();
+  });
+</script>
+</body>
+</html>
