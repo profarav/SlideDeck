@@ -1,0 +1,6 @@
+slides_png/
+__pycache__/
+.venv/
+venv/
+*.pyc
+chroma_db/
