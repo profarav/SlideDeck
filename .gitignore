@@ -23,7 +23,6 @@ env/
 
 # Data files (too large for git / generated locally)
 chroma_db/
-slides_png/
 
 # OS
 .DS_Store
