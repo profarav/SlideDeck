@@ -44,6 +44,21 @@ class ProspectRequest(BaseModel):
     n_results: int = 8
 
 
+GITHUB_RAW_BASE = "https://raw.githubusercontent.com/profarav/SlideDeck/main/slides_png"
+
+
+def _image_url(slide: dict) -> str:
+    filename = slide.get("filename", "")
+    if filename:
+        return f"{GITHUB_RAW_BASE}/{filename}"
+    # Fallback: construct from slide_number
+    try:
+        num = int(str(slide["slide_number"]).split("-")[0])
+        return f"{GITHUB_RAW_BASE}/slide-{num:03d}.png"
+    except (ValueError, KeyError):
+        return ""
+
+
 class SlideResult(BaseModel):
     slide_number: str
     client: str
@@ -53,6 +68,7 @@ class SlideResult(BaseModel):
     service_category: str
     content: str
     score: float
+    image_url: str
 
 
 class DeckResponse(BaseModel):
@@ -77,7 +93,7 @@ def generate_deck(req: ProspectRequest):
 
     return DeckResponse(
         persona=persona,
-        slides=[SlideResult(**s) for s in slides],
+        slides=[SlideResult(**s, image_url=_image_url(s)) for s in slides],
     )
 
 
