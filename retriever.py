@@ -81,15 +81,17 @@ Preferred visual style: {visual_style}
 Available slides:
 {slide_list}
 
-Return ONLY a JSON array of the {n} best slide indices (0-based), ordered best-first.
-Prioritize: (1) work type match — only show slides demonstrating the TYPE OF WORK needed,
-(2) industry match, (3) content relevance, (4) visual style match.
-Example: [2, 0, 4, 1, 3]
-Return only the JSON array, nothing else."""
+Return a JSON object with exactly two keys:
+- "indices": array of the {n} best slide indices (0-based), ordered best-first
+- "reasons": object mapping each chosen index (as a string) to a single sentence explaining specifically why this slide fits this prospect
+
+Prioritize: (1) work type match, (2) industry match, (3) content relevance, (4) visual style.
+Example: {{"indices": [2, 0, 4], "reasons": {{"2": "Directly showcases B2B SaaS dashboard work for a fintech client.", "0": "Landing page for a payments company matches the prospect's embedded finance product.", "4": "Investor deck for a healthcare startup mirrors the client's fundraising context."}}}}
+Return only the JSON object, nothing else."""
 
     msg = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=128,
+        max_tokens=512,
         messages=[{"role": "user", "content": prompt}],
     )
 
@@ -97,18 +99,28 @@ Return only the JSON array, nothing else."""
     if raw.startswith("```"):
         raw = raw.split("```")[1].lstrip("json").strip()
 
-    # Extract only the JSON array, ignoring any extra text Claude might add
-    arr_match = _re.search(r"\[[\d,\s]+\]", raw)
-    if arr_match:
-        raw = arr_match.group(0)
+    # Parse the response — try full object first, fall back to array-only
+    indices = []
+    reasons: dict[str, str] = {}
+    try:
+        obj = json.loads(raw)
+        if isinstance(obj, dict):
+            indices = obj.get("indices", [])
+            reasons = {str(k): v for k, v in obj.get("reasons", {}).items()}
+        elif isinstance(obj, list):
+            indices = obj
+    except json.JSONDecodeError:
+        arr_match = _re.search(r"\[[\d,\s]+\]", raw)
+        if arr_match:
+            indices = json.loads(arr_match.group(0))
 
-    indices = json.loads(raw)
     valid = [i for i in indices if isinstance(i, int) and 0 <= i < len(candidates)]
     total = len(valid)
     results = []
     for rank, i in enumerate(valid[:n]):
         slide = dict(candidates[i])
         slide["score"] = round(1.0 - (rank / max(total, 1)) * 0.3, 3)
+        slide["why"] = reasons.get(str(i), "")
         results.append(slide)
     return results
 
