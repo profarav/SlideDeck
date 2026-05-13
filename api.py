@@ -1,21 +1,29 @@
 """
-FastAPI backend — POST /generate-deck
+FastAPI backend
 
-Start with:
-    uvicorn api:app --reload --port 8000
+Endpoints:
+  GET  /                  → UI
+  POST /generate-deck     → case study finder (existing)
+  POST /build-deck        → full ordered pitch deck
+  POST /export-pdf        → compile slide PNGs → PDF download
+  GET  /health
 """
 
 import html as _html
+import io
 import re as _re
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from PIL import Image
 from pydantic import BaseModel
 
+from deck_builder import build_full_deck
 from profiler import build_search_persona
 from retriever import retrieve_case_studies
 
@@ -43,26 +51,21 @@ def serve_ui():
     return HTMLResponse("<h1>Klimt Slide Engine</h1><p>UI not found.</p>")
 
 
-# ── URL scraping ──────────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+GITHUB_RAW_BASE = "https://raw.githubusercontent.com/profarav/SlideDeck/main/slides_png"
+
 
 def _fetch_url_text(url: str) -> str:
-    """Fetch a URL and return cleaned plain text (max 3000 chars for profiler)."""
+    """Fetch a URL and return cleaned plain text (max 3000 chars)."""
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=10) as r:
         raw = r.read().decode("utf-8", errors="ignore")
-    # Strip <script> and <style> blocks
     raw = _re.sub(r"<(script|style)[^>]*>.*?</(script|style)>", "", raw, flags=_re.DOTALL | _re.IGNORECASE)
-    # Strip remaining HTML tags
     text = _re.sub(r"<[^>]+>", " ", raw)
-    # Decode HTML entities and collapse whitespace
     text = _html.unescape(text)
     text = _re.sub(r"\s+", " ", text).strip()
     return text[:3000]
-
-
-# ── Image URL helper ──────────────────────────────────────────────────────────
-
-GITHUB_RAW_BASE = "https://raw.githubusercontent.com/profarav/SlideDeck/main/slides_png"
 
 
 def _image_url(slide: dict) -> str:
@@ -74,6 +77,34 @@ def _image_url(slide: dict) -> str:
         return f"{GITHUB_RAW_BASE}/slide-{num:03d}.png"
     except (ValueError, KeyError):
         return ""
+
+
+def _load_slide_image(slide_num_str: str) -> tuple[str, Image.Image | None]:
+    """Load a PNG — local first, then GitHub raw."""
+    try:
+        num = int(str(slide_num_str).split("-")[0])
+        local = _BASE / "slides_png" / f"slide-{num:03d}.png"
+        if local.exists():
+            return slide_num_str, Image.open(local).convert("RGB")
+        url = f"{GITHUB_RAW_BASE}/slide-{num:03d}.png"
+        with urllib.request.urlopen(url, timeout=15) as r:
+            return slide_num_str, Image.open(io.BytesIO(r.read())).convert("RGB")
+    except Exception:
+        return slide_num_str, None
+
+
+def _resolve_description(description: str, url: str) -> str:
+    if description:
+        return description
+    if url:
+        try:
+            text = _fetch_url_text(url)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Could not fetch URL: {e}")
+        if not text:
+            raise HTTPException(status_code=400, detail="URL returned no usable text.")
+        return text
+    raise HTTPException(status_code=400, detail="Provide either a description or a URL.")
 
 
 # ── Models ────────────────────────────────────────────────────────────────────
@@ -97,43 +128,119 @@ class SlideResult(BaseModel):
     why: str = ""
 
 
+def _to_slide_result(s: dict) -> SlideResult:
+    return SlideResult(
+        slide_number=s["slide_number"],
+        client=s.get("client", "Klimt & Design"),
+        industry=s.get("industry", ""),
+        visual_style=s.get("visual_style", ""),
+        service_type=s.get("service_type", ""),
+        service_category=s.get("service_category", ""),
+        content=s.get("content", ""),
+        score=s.get("score", 1.0),
+        image_url=_image_url(s),
+        why=s.get("why", ""),
+    )
+
+
 class DeckResponse(BaseModel):
     persona: dict
     slides: list[SlideResult]
 
 
-# ── Endpoint ──────────────────────────────────────────────────────────────────
+class DeckSection(BaseModel):
+    label: str
+    slides: list[SlideResult]
+
+
+class FullDeckResponse(BaseModel):
+    persona: dict
+    sections: list[DeckSection]
+    total_slides: int
+
+
+class ExportRequest(BaseModel):
+    slide_numbers: list[str]
+    filename: str = "klimt-pitch-deck"
+
+
+# ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @app.post("/generate-deck", response_model=DeckResponse)
 def generate_deck(req: ProspectRequest):
-    description = req.description.strip()
-    url = req.url.strip()
-
-    if not description and not url:
-        raise HTTPException(status_code=400, detail="Provide either a description or a URL.")
-
-    # If URL given, scrape it and use as description
-    if url and not description:
-        try:
-            description = _fetch_url_text(url)
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Could not fetch URL: {e}")
-        if not description:
-            raise HTTPException(status_code=400, detail="URL returned no usable text.")
-
+    description = _resolve_description(req.description.strip(), req.url.strip())
     try:
         persona = build_search_persona(description)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
-
     try:
         slides = retrieve_case_studies(persona, n_results=req.n_results)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Retriever error: {e}")
+    return DeckResponse(persona=persona, slides=[_to_slide_result(s) for s in slides])
 
-    return DeckResponse(
+
+@app.post("/build-deck", response_model=FullDeckResponse)
+def build_deck_endpoint(req: ProspectRequest):
+    description = _resolve_description(req.description.strip(), req.url.strip())
+    try:
+        persona = build_search_persona(description)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
+    try:
+        deck = build_full_deck(persona, n_case_studies=req.n_results)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Deck builder error: {e}")
+
+    sections = [
+        DeckSection(
+            label=sec["label"],
+            slides=[_to_slide_result(s) for s in sec["slides"]],
+        )
+        for sec in deck["sections"]
+    ]
+    return FullDeckResponse(
         persona=persona,
-        slides=[SlideResult(**s, image_url=_image_url(s)) for s in slides],
+        sections=sections,
+        total_slides=deck["total_slides"],
+    )
+
+
+@app.post("/export-pdf")
+def export_pdf(req: ExportRequest):
+    if not req.slide_numbers:
+        raise HTTPException(status_code=400, detail="No slides specified.")
+
+    # Fetch all images in parallel (handles both local and GitHub raw)
+    images_by_num: dict[str, Image.Image] = {}
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        futures = {pool.submit(_load_slide_image, n): n for n in req.slide_numbers}
+        for future in as_completed(futures):
+            num, img = future.result()
+            if img:
+                images_by_num[num] = img
+
+    # Preserve requested order, skip any that failed to load
+    ordered = [images_by_num[n] for n in req.slide_numbers if n in images_by_num]
+
+    if not ordered:
+        raise HTTPException(status_code=500, detail="Could not load any slide images.")
+
+    buf = io.BytesIO()
+    ordered[0].save(
+        buf,
+        format="PDF",
+        save_all=True,
+        append_images=ordered[1:],
+        resolution=150,
+    )
+    buf.seek(0)
+
+    safe_name = _re.sub(r"[^\w\-]", "-", req.filename.strip()) or "klimt-pitch-deck"
+    return StreamingResponse(
+        buf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}.pdf"'},
     )
 
 

@@ -234,10 +234,11 @@
     .results-header {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 16px;
-      display: none;
+      display: none; gap: 8px; flex-wrap: wrap;
     }
     .results-header.visible { display: flex; }
-    .results-header h2 { font-size: 14px; font-weight: 600; }
+    .results-header h2 { font-size: 14px; font-weight: 600; flex: 1; }
+    .header-actions { display: flex; gap: 8px; }
     .slide-numbers-badge {
       font-size: 12px; color: var(--muted);
       background: var(--surface);
@@ -246,8 +247,40 @@
       padding: 6px 12px;
       cursor: pointer;
       transition: border-color 0.15s;
+      white-space: nowrap;
     }
     .slide-numbers-badge:hover { border-color: var(--accent); color: var(--text); }
+    .export-btn {
+      font-size: 12px; color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .export-btn:hover { border-color: var(--success); color: var(--success); }
+    .export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Section dividers for full deck view */
+    .deck-section { margin-bottom: 32px; }
+    .section-header {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 14px;
+    }
+    .section-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--accent2);
+      white-space: nowrap;
+    }
+    .section-line {
+      flex: 1; height: 1px; background: var(--border);
+    }
+    /* When deck mode renders sections, the outer grid becomes a single-column block */
+    #slidesGrid:has(.deck-section) {
+      display: block;
+    }
 
     /* Slide cards grid */
     .slides-grid {
@@ -435,13 +468,17 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
 
     <div class="controls">
       <span class="n-label">Show</span>
-      <input class="n-input" id="nResults" type="number" value="6" min="1" max="20" />
-      <span class="n-label">slides</span>
+      <input class="n-input" id="nResults" type="number" value="4" min="1" max="20" />
+      <span class="n-label">cases</span>
       <button class="btn" id="searchBtn" onclick="runSearch()">
         <div class="spinner"></div>
         <span class="btn-text">Find Slides</span>
       </button>
     </div>
+    <button class="btn" id="deckBtn" onclick="runBuildDeck()" style="background: linear-gradient(135deg, #7c6fff, #a78bfa);">
+      <div class="spinner"></div>
+      <span class="btn-text">🗂 Build Full Deck</span>
+    </button>
 
     <div id="errorBanner" class="error-banner"></div>
 
@@ -488,7 +525,10 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
 
     <div class="results-header" id="resultsHeader">
       <h2 id="resultsTitle">Matched Slides</h2>
-      <button class="slide-numbers-badge" id="copyBtn" onclick="copySlideNumbers()">📋 Copy slide numbers</button>
+      <div class="header-actions">
+        <button class="slide-numbers-badge" id="copyBtn" onclick="copySlideNumbers()">📋 Copy numbers</button>
+        <button class="export-btn" id="exportBtn" onclick="exportPDF()">⬇ Export PDF</button>
+      </div>
     </div>
 
     <div class="slides-grid" id="slidesGrid"></div>
@@ -515,49 +555,87 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     document.getElementById('prospect').focus();
   }
 
-  async function runSearch() {
-    const nResults = parseInt(document.getElementById('nResults').value) || 6;
-    const btn = document.getElementById('searchBtn');
-    const errorBanner = document.getElementById('errorBanner');
-
+  function _getInput() {
     const description = currentMode === 'text' ? document.getElementById('prospect').value.trim() : '';
     const url = currentMode === 'url' ? document.getElementById('prospectUrl').value.trim() : '';
+    return { description, url };
+  }
 
-    if (!description && !url) {
-      (currentMode === 'text' ? document.getElementById('prospect') : document.getElementById('prospectUrl')).focus();
-      return;
-    }
-
-    // Loading state
-    btn.disabled = true;
-    btn.classList.add('loading');
-    errorBanner.classList.remove('visible');
+  function _clearResults() {
+    document.getElementById('errorBanner').classList.remove('visible');
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('personaCard').classList.remove('visible');
     document.getElementById('resultsHeader').classList.remove('visible');
     document.getElementById('slidesGrid').innerHTML = '';
+  }
 
+  function _setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.classList.toggle('loading', loading);
+  }
+
+  async function runSearch() {
+    const nResults = parseInt(document.getElementById('nResults').value) || 4;
+    const { description, url } = _getInput();
+    if (!description && !url) {
+      (currentMode === 'text' ? document.getElementById('prospect') : document.getElementById('prospectUrl')).focus();
+      return;
+    }
+    _clearResults();
+    _setLoading('searchBtn', true);
+    _setLoading('deckBtn', true);
     try {
       const res = await fetch('/generate-deck', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description, url, n_results: nResults }),
       });
-
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
         throw new Error(err.detail || 'Server error');
       }
-
       const data = await res.json();
       renderResults(data);
     } catch (err) {
-      errorBanner.textContent = '⚠ ' + err.message;
-      errorBanner.classList.add('visible');
+      document.getElementById('errorBanner').textContent = '⚠ ' + err.message;
+      document.getElementById('errorBanner').classList.add('visible');
       document.getElementById('emptyState').style.display = 'flex';
     } finally {
-      btn.disabled = false;
-      btn.classList.remove('loading');
+      _setLoading('searchBtn', false);
+      _setLoading('deckBtn', false);
+    }
+  }
+
+  async function runBuildDeck() {
+    const nResults = parseInt(document.getElementById('nResults').value) || 4;
+    const { description, url } = _getInput();
+    if (!description && !url) {
+      (currentMode === 'text' ? document.getElementById('prospect') : document.getElementById('prospectUrl')).focus();
+      return;
+    }
+    _clearResults();
+    _setLoading('searchBtn', true);
+    _setLoading('deckBtn', true);
+    try {
+      const res = await fetch('/build-deck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description, url, n_results: nResults }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'Server error');
+      }
+      const data = await res.json();
+      renderDeck(data);
+    } catch (err) {
+      document.getElementById('errorBanner').textContent = '⚠ ' + err.message;
+      document.getElementById('errorBanner').classList.add('visible');
+      document.getElementById('emptyState').style.display = 'flex';
+    } finally {
+      _setLoading('searchBtn', false);
+      _setLoading('deckBtn', false);
     }
   }
 
@@ -585,39 +663,114 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     // Render cards
     const grid = document.getElementById('slidesGrid');
     grid.innerHTML = '';
-    slides.forEach((slide, idx) => {
-      const delay = idx * 60;
-      const scorePercent = Math.round(slide.score * 100);
-      const imgHtml = slide.image_url
-        ? `<div class="slide-img-wrap">
-             <img src="${escHtml(slide.image_url)}" alt="Slide ${escHtml(slide.slide_number)}" loading="lazy" />
-             <a class="slide-img-open" href="${escHtml(slide.image_url)}" target="_blank" rel="noopener">↗ Open</a>
-           </div>`
-        : `<div class="slide-img-wrap"><div class="slide-img-placeholder">No image</div></div>`;
-      grid.innerHTML += `
-        <div class="slide-card" style="animation-delay:${delay}ms">
-          ${imgHtml}
-          <div class="card-body">
-            <div class="card-top">
-              <span class="rank-badge">#${idx + 1}</span>
-              <span class="slide-num">${slide.slide_number}</span>
-            </div>
-            <div class="client-name">${escHtml(slide.client)}</div>
-            <div class="why-text">${escHtml(slide.why || slide.content)}</div>
-            <div class="card-tags">
-              <span class="tag-industry">${escHtml(slide.industry)}</span>
-              <span class="tag-service">${escHtml(slide.service_type)}</span>
-              <span class="tag-style">${escHtml(slide.visual_style)}</span>
-            </div>
-            <div class="score-row">
-              <div class="score-bar-bg">
-                <div class="score-bar-fill" style="width:${scorePercent}%"></div>
-              </div>
-              <span class="score-text">${scorePercent}%</span>
-            </div>
-          </div>
-        </div>`;
+    slides.forEach((slide, idx) => { grid.innerHTML += buildCardHtml(slide, idx); });
+  }
+
+  function renderDeck(data) {
+    const { persona, sections, total_slides } = data;
+
+    // Persona card (same as renderResults)
+    document.getElementById('personaIndustries').innerHTML =
+      persona.industries.map(i => `<span class="tag">${i}</span>`).join('');
+    document.getElementById('personaServiceCategories').innerHTML =
+      (persona.service_categories || []).map(t => `<span class="tag" style="background:rgba(251,146,60,0.15);border-color:rgba(251,146,60,0.35);color:#fb923c">${t}</span>`).join('');
+    document.getElementById('personaStyle').innerHTML = `<span class="tag">${persona.visual_style}</span>`;
+    document.getElementById('personaQuery').textContent = persona.search_query;
+    document.getElementById('personaReasoning').textContent = persona.reasoning;
+    document.getElementById('personaCard').classList.add('visible');
+
+    document.getElementById('resultsTitle').textContent = `Full Deck — ${total_slides} Slides`;
+    document.getElementById('resultsHeader').classList.add('visible');
+
+    // Collect all slide numbers in order for copy/export
+    lastSlideNumbers = sections.flatMap(s => s.slides.map(sl => sl.slide_number));
+
+    const grid = document.getElementById('slidesGrid');
+    grid.innerHTML = '';
+
+    let globalIdx = 0;
+    sections.forEach(section => {
+      const sectionEl = document.createElement('div');
+      sectionEl.className = 'deck-section';
+      sectionEl.style.gridColumn = '1 / -1';
+
+      sectionEl.innerHTML = `
+        <div class="section-header">
+          <span class="section-label">${escHtml(section.label)}</span>
+          <div class="section-line"></div>
+        </div>
+        <div class="slides-grid" style="margin:0"></div>`;
+
+      const sectionGrid = sectionEl.querySelector('.slides-grid');
+      section.slides.forEach((slide, idx) => {
+        sectionGrid.innerHTML += buildCardHtml(slide, globalIdx + idx);
+      });
+      globalIdx += section.slides.length;
+      grid.appendChild(sectionEl);
     });
+  }
+
+  async function exportPDF() {
+    if (!lastSlideNumbers.length) return;
+    const btn = document.getElementById('exportBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Generating…';
+    try {
+      const res = await fetch('/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slide_numbers: lastSlideNumbers, filename: 'klimt-pitch-deck' }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'Export failed');
+      }
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'klimt-pitch-deck.pdf';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      alert('PDF export failed: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '⬇ Export PDF';
+    }
+  }
+
+  function buildCardHtml(slide, idx) {
+    const delay = idx * 50;
+    const scorePercent = Math.round((slide.score || 1) * 100);
+    const imgHtml = slide.image_url
+      ? `<div class="slide-img-wrap">
+           <img src="${escHtml(slide.image_url)}" alt="Slide ${escHtml(slide.slide_number)}" loading="lazy" />
+           <a class="slide-img-open" href="${escHtml(slide.image_url)}" target="_blank" rel="noopener">↗ Open</a>
+         </div>`
+      : `<div class="slide-img-wrap"><div class="slide-img-placeholder">No image</div></div>`;
+    return `
+      <div class="slide-card" style="animation-delay:${delay}ms">
+        ${imgHtml}
+        <div class="card-body">
+          <div class="card-top">
+            <span class="rank-badge">#${idx + 1}</span>
+            <span class="slide-num">${escHtml(slide.slide_number)}</span>
+          </div>
+          <div class="client-name">${escHtml(slide.client)}</div>
+          <div class="why-text">${escHtml(slide.why || slide.content)}</div>
+          <div class="card-tags">
+            <span class="tag-industry">${escHtml(slide.industry)}</span>
+            <span class="tag-service">${escHtml(slide.service_type)}</span>
+            <span class="tag-style">${escHtml(slide.visual_style)}</span>
+          </div>
+          <div class="score-row">
+            <div class="score-bar-bg">
+              <div class="score-bar-fill" style="width:${scorePercent}%"></div>
+            </div>
+            <span class="score-text">${scorePercent}%</span>
+          </div>
+        </div>
+      </div>`;
   }
 
   function copySlideNumbers() {
