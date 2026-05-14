@@ -125,9 +125,9 @@ Return only the JSON object, nothing else."""
     return results
 
 
-def retrieve_case_studies(persona: dict, n_results: int = 8) -> list[dict]:
+def _build_filtered_pool(persona: dict) -> list[dict]:
     """
-    Full retrieval pipeline with 5-level fallback:
+    Build filtered pool with 5-level fallback:
       Level 1: industry ∩ service_category  (tightest — both match)
       Level 2: service_category only        (right work type beats right industry)
       Level 3: industry only                (drop service_category constraint)
@@ -136,8 +136,6 @@ def retrieve_case_studies(persona: dict, n_results: int = 8) -> list[dict]:
     """
     slides = _load_slides()
     industries: list[str] = persona["industries"]
-    query: str = persona["search_query"]
-    visual_style: str = persona["visual_style"]
     service_categories: list[str] = persona.get("service_categories", [])
 
     # ── Level 1: industry + service_category (perfect match) ──────────────────
@@ -178,7 +176,128 @@ def retrieve_case_studies(persona: dict, n_results: int = 8) -> list[dict]:
         if s["slide_number"] not in seen_nums:
             seen_nums.add(s["slide_number"])
             deduped.append(s)
-    filtered = deduped
+    return deduped
+
+
+def _merge_ranked_with_pins(
+    *,
+    filtered: list[dict],
+    ranked: list[dict],
+    pinned: list[str],
+    excluded: set[str],
+    n_results: int,
+) -> list[dict]:
+    by_num = {s["slide_number"]: s for s in filtered}
+    results: list[dict] = []
+    seen: set[str] = set()
+
+    for slide_num in pinned:
+        if slide_num in excluded:
+            continue
+        slide = by_num.get(slide_num)
+        if not slide:
+            continue
+        item = dict(slide)
+        item.setdefault("score", 1.0)
+        item.setdefault("why", "Pinned by user request.")
+        results.append(item)
+        seen.add(slide_num)
+
+    for s in ranked:
+        num = s["slide_number"]
+        if num in excluded or num in seen:
+            continue
+        results.append(s)
+        seen.add(num)
+        if len(results) >= n_results:
+            return results[:n_results]
+
+    for s in filtered:
+        num = s["slide_number"]
+        if num in excluded or num in seen:
+            continue
+        item = dict(s)
+        item.setdefault("score", 0.7)
+        item.setdefault("why", "Backfill to complete requested count.")
+        results.append(item)
+        seen.add(num)
+        if len(results) >= n_results:
+            break
+
+    return results[:n_results]
+
+
+def retrieve_case_studies_with_controls(
+    persona: dict,
+    *,
+    n_results: int = 8,
+    pinned: list[str] | None = None,
+    excluded: list[str] | None = None,
+    previous_visible: list[str] | None = None,
+    variant: str = "",
+) -> list[dict]:
+    query: str = persona["search_query"]
+    visual_style: str = persona["visual_style"]
+    service_categories: list[str] = persona.get("service_categories", [])
+
+    filtered = _build_filtered_pool(persona)
+    pinned = pinned or []
+    excluded_set = set(excluded or [])
+    previous_visible_set = set(previous_visible or [])
+
+    hard_excluded = set(excluded_set)
+    if variant == "more_like_this":
+        hard_excluded.update(s for s in previous_visible_set if s not in set(pinned))
+
+    pinned_set = set(pinned)
+    rank_pool = [
+        s for s in filtered
+        if s["slide_number"] not in pinned_set
+        and s["slide_number"] not in hard_excluded
+    ]
+
+    top_n = min(max(20, n_results * 4), len(rank_pool))
+    candidates = _keyword_rank(query, rank_pool, top_n=top_n)
+
+    ranked_count = min(len(candidates), max(n_results * 3, n_results))
+    ranked = _claude_rank(query, candidates, visual_style, service_categories, n=ranked_count) if candidates else []
+    merged = _merge_ranked_with_pins(
+        filtered=filtered,
+        ranked=ranked,
+        pinned=pinned,
+        excluded=excluded_set,
+        n_results=n_results,
+    )
+
+    if len(merged) >= n_results or variant != "more_like_this":
+        return merged[:n_results]
+
+    # Backfill in "more_like_this" mode if temporary exclusions removed too many options.
+    relaxed_pool = [
+        s for s in filtered
+        if s["slide_number"] not in pinned_set
+        and s["slide_number"] not in excluded_set
+    ]
+    relaxed_top_n = min(max(20, n_results * 4), len(relaxed_pool))
+    relaxed_candidates = _keyword_rank(query, relaxed_pool, top_n=relaxed_top_n)
+    relaxed_ranked_count = min(len(relaxed_candidates), max(n_results * 3, n_results))
+    relaxed_ranked = _claude_rank(
+        query, relaxed_candidates, visual_style, service_categories, n=relaxed_ranked_count
+    ) if relaxed_candidates else []
+    return _merge_ranked_with_pins(
+        filtered=filtered,
+        ranked=relaxed_ranked,
+        pinned=pinned,
+        excluded=excluded_set,
+        n_results=n_results,
+    )
+
+
+def retrieve_case_studies(persona: dict, n_results: int = 8) -> list[dict]:
+    filtered = _build_filtered_pool(persona)
+    query: str = persona["search_query"]
+    visual_style: str = persona["visual_style"]
+    service_categories: list[str] = persona.get("service_categories", [])
 
     # ── Stage 2: Keyword pre-rank (keep top 20 for Claude) ────────────────────
     candidates = _keyword_rank(query, filtered, top_n=min(20, len(filtered)))

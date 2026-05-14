@@ -5,6 +5,8 @@ Endpoints:
   GET  /                  → UI
   POST /generate-deck     → case study finder (existing)
   POST /build-deck        → full ordered pitch deck
+  POST /refine-slides     → controlled refinement (pin/exclude/variant)
+  POST /refine-full-deck  → full deck refinement (case studies only)
   POST /export-pdf        → compile slide PNGs → PDF download
   GET  /health
 """
@@ -21,11 +23,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from deck_builder import build_full_deck
+from deck_builder import build_full_deck, refine_full_deck
 from profiler import build_search_persona
-from retriever import retrieve_case_studies
+from retriever import retrieve_case_studies, retrieve_case_studies_with_controls
 
 _BASE = Path(__file__).parent
 _STATIC_DIR = _BASE / "static"
@@ -128,6 +130,22 @@ class ProspectRequest(BaseModel):
     n_results: int = 8
 
 
+class RefineRequest(ProspectRequest):
+    pinned: list[str] = Field(default_factory=list)
+    excluded: list[str] = Field(default_factory=list)
+    previous_visible: list[str] = Field(default_factory=list)
+    variant: str = ""
+
+
+class ExistingSectionRequest(BaseModel):
+    label: str
+    slides: list[dict]
+
+
+class RefineFullDeckRequest(RefineRequest):
+    existing_sections: list[ExistingSectionRequest] = Field(default_factory=list)
+
+
 class SlideResult(BaseModel):
     slide_number: str
     client: str
@@ -202,6 +220,63 @@ def build_deck_endpoint(req: ProspectRequest):
         raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
     try:
         deck = build_full_deck(persona, n_case_studies=req.n_results)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Deck builder error: {e}")
+
+    sections = [
+        DeckSection(
+            label=sec["label"],
+            slides=[_to_slide_result(s) for s in sec["slides"]],
+        )
+        for sec in deck["sections"]
+    ]
+    return FullDeckResponse(
+        persona=persona,
+        sections=sections,
+        total_slides=deck["total_slides"],
+    )
+
+
+@app.post("/refine-slides", response_model=DeckResponse)
+def refine_slides(req: RefineRequest):
+    description = _resolve_description(req.description.strip(), req.url.strip())
+    try:
+        persona = build_search_persona(description)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
+    try:
+        slides = retrieve_case_studies_with_controls(
+            persona,
+            n_results=req.n_results,
+            pinned=req.pinned,
+            excluded=req.excluded,
+            previous_visible=req.previous_visible,
+            variant=req.variant.strip(),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Retriever error: {e}")
+    return DeckResponse(persona=persona, slides=[_to_slide_result(s) for s in slides])
+
+
+@app.post("/refine-full-deck", response_model=FullDeckResponse)
+def refine_full_deck_endpoint(req: RefineFullDeckRequest):
+    description = _resolve_description(req.description.strip(), req.url.strip())
+    try:
+        persona = build_search_persona(description)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
+
+    existing_sections = [sec.model_dump() for sec in req.existing_sections]
+    try:
+        deck = refine_full_deck(
+            persona,
+            existing_sections=existing_sections,
+            n_case_studies=req.n_results,
+            pinned=req.pinned,
+            excluded=req.excluded,
+            previous_visible=req.previous_visible,
+            variant=req.variant.strip(),
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Deck builder error: {e}")
 

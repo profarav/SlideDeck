@@ -213,6 +213,7 @@
     .results-header.visible { display: flex; }
     .results-header h2 { font-size: 14px; font-weight: 600; flex: 1; }
     .header-actions { display: flex; gap: 8px; }
+    .control-actions { display: flex; gap: 8px; }
     .slide-numbers-badge {
       font-size: 12px; color: var(--muted);
       background: var(--surface);
@@ -236,6 +237,18 @@
     }
     .export-btn:hover { border-color: var(--success); color: var(--success); }
     .export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .control-btn {
+      font-size: 12px; color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .control-btn:hover { border-color: var(--accent); }
+    .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* Section dividers for full deck view */
     .deck-section { margin-bottom: 32px; }
@@ -316,6 +329,30 @@
 
     .card-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
     .card-top { display: flex; align-items: center; justify-content: space-between; }
+    .card-controls { display: flex; gap: 6px; }
+    .card-control-btn {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      border-radius: 999px;
+      font-size: 11px;
+      padding: 3px 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .card-control-btn:hover { border-color: var(--accent); color: var(--text); }
+    .card-control-btn.active-pin {
+      border-color: rgba(52, 211, 153, 0.6);
+      color: #6ee7b7;
+      background: rgba(52, 211, 153, 0.15);
+    }
+    .card-control-btn.active-exclude {
+      border-color: rgba(239, 68, 68, 0.6);
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.15);
+    }
+    .slide-card.is-excluded { opacity: 0.65; border-color: rgba(239, 68, 68, 0.4); }
+    .slide-card.is-pinned { border-color: rgba(52, 211, 153, 0.45); }
     .rank-badge {
       font-size: 11px; color: var(--muted);
       background: var(--surface);
@@ -391,6 +428,79 @@
       display: none;
     }
     .error-banner.visible { display: block; }
+    .history {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .history h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+    }
+    .history-clear {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .history-clear:hover { color: #fca5a5; }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .history-empty {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .history-item {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 9px;
+      padding: 9px 10px;
+    }
+    .history-item-title {
+      font-size: 12px;
+      color: var(--text);
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+    .history-item-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+    .history-item-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .history-item-actions button {
+      font-size: 11px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 7px;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+    .history-item-actions button:hover {
+      border-color: var(--accent);
+      color: var(--accent2);
+    }
 
     /* Copy toast */
     .toast {
@@ -459,6 +569,14 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
       <button class="example-chip" onclick="setExample(this)">Sustainable direct-to-consumer apparel brand focused on eco-friendly fashion drops.</button>
       <button class="example-chip" onclick="setExample(this)">Series A healthtech startup building virtual care and telemedicine for patients.</button>
     </div>
+
+    <div class="history">
+      <div class="history-header">
+        <h3>Run History</h3>
+        <button class="history-clear" onclick="clearHistory()">Clear all</button>
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </div>
   </aside>
 
   <!-- ── Results Panel ── -->
@@ -495,6 +613,11 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     <div class="results-header" id="resultsHeader">
       <h2 id="resultsTitle">Matched Slides</h2>
       <div class="header-actions">
+        <div class="control-actions">
+          <button class="control-btn" id="applyControlsBtn" onclick="applyControls()" disabled>Apply controls</button>
+          <button class="control-btn" id="moreLikeThisBtn" onclick="requestMoreLikeThis()" disabled>More like this</button>
+          <button class="control-btn" id="resetControlsBtn" onclick="resetControls()" disabled>Reset controls</button>
+        </div>
         <button class="slide-numbers-badge" id="copyBtn" onclick="copySlideNumbers()">📋 Copy numbers</button>
         <button class="export-btn" id="exportBtn" onclick="exportPDF()">⬇ Export PDF</button>
       </div>
@@ -507,11 +630,24 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
 <div class="toast" id="toast">Slide numbers copied!</div>
 
 <script>
+  const HISTORY_KEY = 'klimt_slide_history_v1';
+  const HISTORY_LIMIT = 25;
+
   let lastSlideNumbers = [];
+  let currentMode = 'search';
+  let pinnedSlideNumbers = new Set();
+  let excludedSlideNumbers = new Set();
+  let lastRequestPayload = null;
+  let lastResponsePayload = null;
+  let lastVisibleCaseStudyNumbers = [];
 
   function setExample(btn) {
     document.getElementById('prospect').value = btn.textContent.trim();
     document.getElementById('prospect').focus();
+  }
+
+  function _clone(obj) {
+    return JSON.parse(JSON.stringify(obj));
   }
 
   function _getInput() {
@@ -520,12 +656,9 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     return { description, url };
   }
 
-  function _clearResults() {
-    document.getElementById('errorBanner').classList.remove('visible');
-    document.getElementById('emptyState').style.display = 'none';
-    document.getElementById('personaCard').classList.remove('visible');
-    document.getElementById('resultsHeader').classList.remove('visible');
-    document.getElementById('slidesGrid').innerHTML = '';
+  function _resetControlState() {
+    pinnedSlideNumbers = new Set();
+    excludedSlideNumbers = new Set();
   }
 
   function _setLoading(btnId, loading) {
@@ -534,28 +667,155 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     btn.classList.toggle('loading', loading);
   }
 
+  function _setControlLoading(loading) {
+    const ids = ['applyControlsBtn', 'moreLikeThisBtn', 'resetControlsBtn'];
+    ids.forEach(id => {
+      const btn = document.getElementById(id);
+      btn.disabled = loading || !lastVisibleCaseStudyNumbers.length;
+    });
+  }
+
+  function _clearResults() {
+    document.getElementById('errorBanner').classList.remove('visible');
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('personaCard').classList.remove('visible');
+    document.getElementById('resultsHeader').classList.remove('visible');
+    document.getElementById('slidesGrid').innerHTML = '';
+    _setControlLoading(true);
+  }
+
+  function _renderPersona(persona) {
+    const industries = persona.industries || [];
+    const serviceCategories = persona.service_categories || [];
+    document.getElementById('personaIndustries').innerHTML =
+      industries.map(i => `<span class="tag">${escHtml(i)}</span>`).join('');
+    document.getElementById('personaServiceCategories').innerHTML =
+      serviceCategories.map(t => `<span class="tag" style="background:rgba(251,146,60,0.15);border-color:rgba(251,146,60,0.35);color:#fb923c">${escHtml(t)}</span>`).join('');
+    document.getElementById('personaStyle').innerHTML = `<span class="tag">${escHtml(persona.visual_style || '')}</span>`;
+    document.getElementById('personaQuery').textContent = persona.search_query || '';
+    document.getElementById('personaReasoning').textContent = persona.reasoning || '';
+    document.getElementById('personaCard').classList.add('visible');
+  }
+
+  function _extractCaseStudyNumbers(data, mode) {
+    if (mode === 'search') {
+      return (data.slides || []).map(s => s.slide_number);
+    }
+    const caseSection = (data.sections || []).find(s => s.label === 'Case Studies');
+    return caseSection ? caseSection.slides.map(s => s.slide_number) : [];
+  }
+
+  function _updateHeaderTitle(data, mode) {
+    if (mode === 'search') {
+      const slides = data.slides || [];
+      document.getElementById('resultsTitle').textContent =
+        `${slides.length} Case Stud${slides.length === 1 ? 'y' : 'ies'} Found`;
+      return;
+    }
+    document.getElementById('resultsTitle').textContent = `Full Deck — ${data.total_slides || 0} Slides`;
+  }
+
+  function _renderByMode(data, mode) {
+    _renderPersona(data.persona || {});
+    _updateHeaderTitle(data, mode);
+    document.getElementById('resultsHeader').classList.add('visible');
+
+    const grid = document.getElementById('slidesGrid');
+    grid.innerHTML = '';
+
+    if (mode === 'search') {
+      const slides = data.slides || [];
+      lastSlideNumbers = slides.map(s => s.slide_number);
+      slides.forEach((slide, idx) => {
+        grid.innerHTML += buildCardHtml(slide, idx, { isCaseStudy: true });
+      });
+      return;
+    }
+
+    const sections = data.sections || [];
+    lastSlideNumbers = sections.flatMap(s => (s.slides || []).map(sl => sl.slide_number));
+    let globalIdx = 0;
+    sections.forEach(section => {
+      const sectionEl = document.createElement('div');
+      sectionEl.className = 'deck-section';
+      sectionEl.style.gridColumn = '1 / -1';
+      sectionEl.innerHTML = `
+        <div class="section-header">
+          <span class="section-label">${escHtml(section.label)}</span>
+          <div class="section-line"></div>
+        </div>
+        <div class="slides-grid" style="margin:0"></div>`;
+
+      const sectionGrid = sectionEl.querySelector('.slides-grid');
+      const isCaseStudySection = section.label === 'Case Studies';
+      (section.slides || []).forEach((slide, idx) => {
+        sectionGrid.innerHTML += buildCardHtml(slide, globalIdx + idx, { isCaseStudy: isCaseStudySection });
+      });
+      globalIdx += (section.slides || []).length;
+      grid.appendChild(sectionEl);
+    });
+  }
+
+  function _commitRun(mode, requestPayload, data, shouldSaveHistory = true) {
+    currentMode = mode;
+    lastRequestPayload = _clone(requestPayload);
+    lastResponsePayload = _clone(data);
+    lastVisibleCaseStudyNumbers = _extractCaseStudyNumbers(data, mode);
+    _clearResults();
+    _renderByMode(data, mode);
+    _setControlLoading(false);
+    if (shouldSaveHistory) saveCurrentHistoryEntry();
+  }
+
+  function _buildRefinePayload(variant) {
+    const payload = {
+      description: lastRequestPayload.description || '',
+      url: lastRequestPayload.url || '',
+      n_results: lastRequestPayload.n_results || 4,
+      pinned: Array.from(pinnedSlideNumbers),
+      excluded: Array.from(excludedSlideNumbers),
+      previous_visible: variant === 'more_like_this' ? [...lastVisibleCaseStudyNumbers] : [],
+      variant: variant || '',
+    };
+    if (currentMode === 'deck') {
+      payload.existing_sections = (lastResponsePayload && lastResponsePayload.sections) ? _clone(lastResponsePayload.sections) : [];
+    }
+    return payload;
+  }
+
+  function _warnIfMissingPinned() {
+    const visible = new Set(lastVisibleCaseStudyNumbers);
+    const missing = Array.from(pinnedSlideNumbers).filter(num => !visible.has(num));
+    if (missing.length) {
+      showToast(`Pinned slides unavailable: ${missing.join(', ')}`);
+    }
+  }
+
   async function runSearch() {
-    const nResults = parseInt(document.getElementById('nResults').value) || 4;
+    const nResults = parseInt(document.getElementById('nResults').value, 10) || 4;
     const { description, url } = _getInput();
     if (!description && !url) {
       document.getElementById('prospect').focus();
       return;
     }
+
+    _resetControlState();
     _clearResults();
     _setLoading('searchBtn', true);
     _setLoading('deckBtn', true);
+    const payload = { description, url, n_results: nResults };
     try {
       const res = await fetch('/generate-deck', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, url, n_results: nResults }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
         throw new Error(err.detail || 'Server error');
       }
       const data = await res.json();
-      renderResults(data);
+      _commitRun('search', payload, data, true);
     } catch (err) {
       document.getElementById('errorBanner').textContent = '⚠ ' + err.message;
       document.getElementById('errorBanner').classList.add('visible');
@@ -567,27 +827,30 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
   }
 
   async function runBuildDeck() {
-    const nResults = parseInt(document.getElementById('nResults').value) || 4;
+    const nResults = parseInt(document.getElementById('nResults').value, 10) || 4;
     const { description, url } = _getInput();
     if (!description && !url) {
       document.getElementById('prospect').focus();
       return;
     }
+
+    _resetControlState();
     _clearResults();
     _setLoading('searchBtn', true);
     _setLoading('deckBtn', true);
+    const payload = { description, url, n_results: nResults };
     try {
       const res = await fetch('/build-deck', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description, url, n_results: nResults }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
         throw new Error(err.detail || 'Server error');
       }
       const data = await res.json();
-      renderDeck(data);
+      _commitRun('deck', payload, data, true);
     } catch (err) {
       document.getElementById('errorBanner').textContent = '⚠ ' + err.message;
       document.getElementById('errorBanner').classList.add('visible');
@@ -598,75 +861,75 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     }
   }
 
-  function renderResults(data) {
-    const { persona, slides } = data;
-
-    // Persona card
-    document.getElementById('personaIndustries').innerHTML =
-      persona.industries.map(i => `<span class="tag">${i}</span>`).join('');
-    document.getElementById('personaServiceCategories').innerHTML =
-      (persona.service_categories || []).map(t => `<span class="tag" style="background:rgba(251,146,60,0.15);border-color:rgba(251,146,60,0.35);color:#fb923c">${t}</span>`).join('');
-    document.getElementById('personaStyle').innerHTML = `<span class="tag">${persona.visual_style}</span>`;
-    document.getElementById('personaQuery').textContent = persona.search_query;
-    document.getElementById('personaReasoning').textContent = persona.reasoning;
-    document.getElementById('personaCard').classList.add('visible');
-
-    // Results header
-    document.getElementById('resultsTitle').textContent =
-      `${slides.length} Case Stud${slides.length === 1 ? 'y' : 'ies'} Found`;
-    document.getElementById('resultsHeader').classList.add('visible');
-
-    // Store for copy
-    lastSlideNumbers = slides.map(s => s.slide_number);
-
-    // Render cards
-    const grid = document.getElementById('slidesGrid');
-    grid.innerHTML = '';
-    slides.forEach((slide, idx) => { grid.innerHTML += buildCardHtml(slide, idx); });
+  function togglePin(slideNumber) {
+    const num = String(slideNumber);
+    if (pinnedSlideNumbers.has(num)) {
+      pinnedSlideNumbers.delete(num);
+    } else {
+      pinnedSlideNumbers.add(num);
+      excludedSlideNumbers.delete(num);
+    }
+    _renderByMode(lastResponsePayload, currentMode);
+    _setControlLoading(false);
   }
 
-  function renderDeck(data) {
-    const { persona, sections, total_slides } = data;
+  function toggleExclude(slideNumber) {
+    const num = String(slideNumber);
+    if (excludedSlideNumbers.has(num)) {
+      excludedSlideNumbers.delete(num);
+    } else {
+      excludedSlideNumbers.add(num);
+      pinnedSlideNumbers.delete(num);
+    }
+    _renderByMode(lastResponsePayload, currentMode);
+    _setControlLoading(false);
+  }
 
-    // Persona card (same as renderResults)
-    document.getElementById('personaIndustries').innerHTML =
-      persona.industries.map(i => `<span class="tag">${i}</span>`).join('');
-    document.getElementById('personaServiceCategories').innerHTML =
-      (persona.service_categories || []).map(t => `<span class="tag" style="background:rgba(251,146,60,0.15);border-color:rgba(251,146,60,0.35);color:#fb923c">${t}</span>`).join('');
-    document.getElementById('personaStyle').innerHTML = `<span class="tag">${persona.visual_style}</span>`;
-    document.getElementById('personaQuery').textContent = persona.search_query;
-    document.getElementById('personaReasoning').textContent = persona.reasoning;
-    document.getElementById('personaCard').classList.add('visible');
+  async function _refineRun(variant) {
+    if (!lastRequestPayload || !lastResponsePayload) return;
 
-    document.getElementById('resultsTitle').textContent = `Full Deck — ${total_slides} Slides`;
-    document.getElementById('resultsHeader').classList.add('visible');
-
-    // Collect all slide numbers in order for copy/export
-    lastSlideNumbers = sections.flatMap(s => s.slides.map(sl => sl.slide_number));
-
-    const grid = document.getElementById('slidesGrid');
-    grid.innerHTML = '';
-
-    let globalIdx = 0;
-    sections.forEach(section => {
-      const sectionEl = document.createElement('div');
-      sectionEl.className = 'deck-section';
-      sectionEl.style.gridColumn = '1 / -1';
-
-      sectionEl.innerHTML = `
-        <div class="section-header">
-          <span class="section-label">${escHtml(section.label)}</span>
-          <div class="section-line"></div>
-        </div>
-        <div class="slides-grid" style="margin:0"></div>`;
-
-      const sectionGrid = sectionEl.querySelector('.slides-grid');
-      section.slides.forEach((slide, idx) => {
-        sectionGrid.innerHTML += buildCardHtml(slide, globalIdx + idx);
+    _setControlLoading(true);
+    _setLoading('searchBtn', true);
+    _setLoading('deckBtn', true);
+    const endpoint = currentMode === 'search' ? '/refine-slides' : '/refine-full-deck';
+    const payload = _buildRefinePayload(variant);
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
-      globalIdx += section.slides.length;
-      grid.appendChild(sectionEl);
-    });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'Server error');
+      }
+      const data = await res.json();
+      _commitRun(currentMode, lastRequestPayload, data, true);
+      _warnIfMissingPinned();
+    } catch (err) {
+      document.getElementById('errorBanner').textContent = '⚠ ' + err.message;
+      document.getElementById('errorBanner').classList.add('visible');
+    } finally {
+      _setLoading('searchBtn', false);
+      _setLoading('deckBtn', false);
+      _setControlLoading(false);
+    }
+  }
+
+  function applyControls() {
+    _refineRun('');
+  }
+
+  function requestMoreLikeThis() {
+    _refineRun('more_like_this');
+  }
+
+  function resetControls() {
+    if (!lastResponsePayload) return;
+    _resetControlState();
+    _renderByMode(lastResponsePayload, currentMode);
+    _setControlLoading(false);
+    showToast('Controls reset.');
   }
 
   async function exportPDF() {
@@ -698,23 +961,34 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     }
   }
 
-  function buildCardHtml(slide, idx) {
+  function buildCardHtml(slide, idx, opts = {}) {
     const delay = idx * 50;
     const scorePercent = Math.round((slide.score || 1) * 100);
+    const slideNum = String(slide.slide_number);
+    const isPinned = pinnedSlideNumbers.has(slideNum);
+    const isExcluded = excludedSlideNumbers.has(slideNum);
+    const cardFlags = `${isPinned ? ' is-pinned' : ''}${isExcluded ? ' is-excluded' : ''}`;
     const imgHtml = slide.image_url
       ? `<div class="slide-img-wrap">
            <img src="${escHtml(slide.image_url)}" alt="Slide ${escHtml(slide.slide_number)}" loading="lazy" />
            <a class="slide-img-open" href="${escHtml(slide.image_url)}" target="_blank" rel="noopener">↗ Open</a>
          </div>`
       : `<div class="slide-img-wrap"><div class="slide-img-placeholder">No image</div></div>`;
+    const controlsHtml = opts.isCaseStudy
+      ? `<div class="card-controls">
+           <button class="card-control-btn ${isPinned ? 'active-pin' : ''}" onclick="togglePin('${escJs(slideNum)}')">📌 Pin</button>
+           <button class="card-control-btn ${isExcluded ? 'active-exclude' : ''}" onclick="toggleExclude('${escJs(slideNum)}')">🚫 Exclude</button>
+         </div>`
+      : '';
     return `
-      <div class="slide-card" style="animation-delay:${delay}ms">
+      <div class="slide-card${cardFlags}" style="animation-delay:${delay}ms">
         ${imgHtml}
         <div class="card-body">
           <div class="card-top">
             <span class="rank-badge">#${idx + 1}</span>
             <span class="slide-num">${escHtml(slide.slide_number)}</span>
           </div>
+          ${controlsHtml}
           <div class="client-name">${escHtml(slide.client)}</div>
           <div class="why-text">${escHtml(slide.why || slide.content)}</div>
           <div class="card-tags">
@@ -732,13 +1006,148 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
       </div>`;
   }
 
+  function _readHistory() {
+    try {
+      return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  }
+
+  function _writeHistory(entries) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries));
+  }
+
+  function _formatHistoryLabel(entry) {
+    const src = entry.input.description || entry.input.url || '';
+    return src.length > 55 ? `${src.slice(0, 55)}…` : src;
+  }
+
+  function saveCurrentHistoryEntry() {
+    if (!lastRequestPayload || !lastResponsePayload) return;
+    const entries = _readHistory();
+    const newEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      timestamp: new Date().toISOString(),
+      mode: currentMode,
+      input: _clone(lastRequestPayload),
+      control_state: {
+        pinned: Array.from(pinnedSlideNumbers),
+        excluded: Array.from(excludedSlideNumbers),
+      },
+      response_payload: _clone(lastResponsePayload),
+    };
+    const next = [newEntry, ...entries].slice(0, HISTORY_LIMIT);
+    _writeHistory(next);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    const entries = _readHistory();
+    if (!entries.length) {
+      list.innerHTML = `<div class="history-empty">No saved runs yet. Results are auto-saved here.</div>`;
+      return;
+    }
+    list.innerHTML = entries.map((entry, idx) => `
+      <div class="history-item">
+        <div class="history-item-title">${escHtml(_formatHistoryLabel(entry) || '(No prompt)')}</div>
+        <div class="history-item-meta">${escHtml(entry.mode === 'deck' ? 'Full deck' : 'Find slides')} • ${escHtml(new Date(entry.timestamp).toLocaleString())}</div>
+        <div class="history-item-actions">
+          <button onclick="restoreHistory(${idx})">Restore</button>
+          <button onclick="rerunHistory(${idx})">Rerun</button>
+          <button onclick="deleteHistory(${idx})">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function restoreHistory(index) {
+    const entries = _readHistory();
+    const entry = entries[index];
+    if (!entry) return;
+    document.getElementById('prospect').value = entry.input.description || '';
+    document.getElementById('prospectUrl').value = entry.input.url || '';
+    document.getElementById('nResults').value = entry.input.n_results || 4;
+    pinnedSlideNumbers = new Set(entry.control_state?.pinned || []);
+    excludedSlideNumbers = new Set(entry.control_state?.excluded || []);
+    _commitRun(entry.mode || 'search', entry.input, entry.response_payload, false);
+    showToast('History entry restored.');
+  }
+
+  async function rerunHistory(index) {
+    const entries = _readHistory();
+    const entry = entries[index];
+    if (!entry) return;
+
+    document.getElementById('prospect').value = entry.input.description || '';
+    document.getElementById('prospectUrl').value = entry.input.url || '';
+    document.getElementById('nResults').value = entry.input.n_results || 4;
+    pinnedSlideNumbers = new Set(entry.control_state?.pinned || []);
+    excludedSlideNumbers = new Set(entry.control_state?.excluded || []);
+
+    _setControlLoading(true);
+    _setLoading('searchBtn', true);
+    _setLoading('deckBtn', true);
+    try {
+      const endpoint = entry.mode === 'deck' ? '/refine-full-deck' : '/refine-slides';
+      const payload = {
+        ...entry.input,
+        pinned: Array.from(pinnedSlideNumbers),
+        excluded: Array.from(excludedSlideNumbers),
+        previous_visible: [],
+        variant: '',
+      };
+      if (entry.mode === 'deck') {
+        payload.existing_sections = _clone(entry.response_payload?.sections || []);
+      }
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'Server error');
+      }
+      const data = await res.json();
+      _commitRun(entry.mode || 'search', entry.input, data, true);
+      _warnIfMissingPinned();
+    } catch (err) {
+      document.getElementById('errorBanner').textContent = '⚠ ' + err.message;
+      document.getElementById('errorBanner').classList.add('visible');
+    } finally {
+      _setLoading('searchBtn', false);
+      _setLoading('deckBtn', false);
+      _setControlLoading(false);
+    }
+  }
+
+  function deleteHistory(index) {
+    const entries = _readHistory();
+    entries.splice(index, 1);
+    _writeHistory(entries);
+    renderHistory();
+  }
+
+  function clearHistory() {
+    _writeHistory([]);
+    renderHistory();
+    showToast('History cleared.');
+  }
+
   function copySlideNumbers() {
     if (!lastSlideNumbers.length) return;
     navigator.clipboard.writeText(lastSlideNumbers.join(', ')).then(() => {
-      const toast = document.getElementById('toast');
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2000);
+      showToast('Slide numbers copied!');
     });
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
   }
 
   function escHtml(str) {
@@ -749,6 +1158,10 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
       .replace(/"/g, '&quot;');
   }
 
+  function escJs(str) {
+    return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  }
+
   // Submit on Cmd/Ctrl+Enter
   document.getElementById('prospect').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runSearch();
@@ -756,6 +1169,9 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
   document.getElementById('prospectUrl').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runSearch();
   });
+
+  renderHistory();
+  _setControlLoading(true);
 </script>
 </body>
 </html>

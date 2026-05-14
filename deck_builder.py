@@ -11,7 +11,7 @@ import re as _re
 
 import anthropic
 
-from retriever import retrieve_case_studies, _load_slides
+from retriever import retrieve_case_studies, retrieve_case_studies_with_controls, _load_slides
 
 
 def _pick_structural_slides(
@@ -116,4 +116,69 @@ def build_full_deck(persona: dict, n_case_studies: int = 4) -> dict:
         "sections": sections,
         "ordered_slides": intro + studies + closing,
         "total_slides": len(intro) + len(studies) + len(closing),
+    }
+
+
+def refine_full_deck(
+    persona: dict,
+    *,
+    existing_sections: list[dict],
+    n_case_studies: int = 4,
+    pinned: list[str] | None = None,
+    excluded: list[str] | None = None,
+    previous_visible: list[str] | None = None,
+    variant: str = "",
+) -> dict:
+    """Refine only the case-study section while preserving intro/closing sections."""
+    pinned = pinned or []
+    excluded = excluded or []
+    previous_visible = previous_visible or []
+
+    section_map = {sec["label"]: sec for sec in existing_sections}
+    intro = section_map.get("Agency Overview", {"label": "Agency Overview", "slides": []})["slides"]
+    closing = section_map.get("Next Steps", {"label": "Next Steps", "slides": []})["slides"]
+
+    intro_nums = {s["slide_number"] for s in intro}
+    closing_nums = {s["slide_number"] for s in closing}
+    blocked = intro_nums | closing_nums
+
+    # Case-study controls should not alter preserved structural sections.
+    case_pinned = [n for n in pinned if n not in blocked]
+    case_excluded = [n for n in excluded if n not in blocked]
+    case_previous = [n for n in previous_visible if n not in blocked]
+
+    studies = retrieve_case_studies_with_controls(
+        persona,
+        n_results=n_case_studies,
+        pinned=case_pinned,
+        excluded=case_excluded,
+        previous_visible=case_previous,
+        variant=variant,
+    )
+
+    def _tag(slides, default_why):
+        result = []
+        for s in slides:
+            slide = dict(s)
+            slide.setdefault("score", 1.0)
+            slide.setdefault("why", default_why)
+            result.append(slide)
+        return result
+
+    intro_tagged = _tag(intro, "Klimt & Design agency introduction and capabilities overview.")
+    studies_tagged = _tag(studies, "")
+    closing_tagged = _tag(closing, "Closing slide with contact information and next steps.")
+
+    sections = []
+    if intro_tagged:
+        sections.append({"label": "Agency Overview", "slides": intro_tagged})
+    if studies_tagged:
+        sections.append({"label": "Case Studies", "slides": studies_tagged})
+    if closing_tagged:
+        sections.append({"label": "Next Steps", "slides": closing_tagged})
+
+    return {
+        "sections": sections,
+        "ordered_slides": intro_tagged + studies_tagged + closing_tagged,
+        "total_slides": len(intro_tagged) + len(studies_tagged) + len(closing_tagged),
     }
