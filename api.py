@@ -94,16 +94,29 @@ def _load_slide_image(slide_num_str: str) -> tuple[str, Image.Image | None]:
 
 
 def _resolve_description(description: str, url: str) -> str:
-    if description:
-        return description
-    if url:
+    has_description = bool(description)
+    has_url = bool(url)
+
+    if has_url:
         try:
-            text = _fetch_url_text(url)
+            url_text = _fetch_url_text(url)
         except Exception as e:
+            if has_description:
+                return description
             raise HTTPException(status_code=400, detail=f"Could not fetch URL: {e}")
-        if not text:
+
+        if not url_text:
+            if has_description:
+                return description
             raise HTTPException(status_code=400, detail="URL returned no usable text.")
-        return text
+
+        if has_description:
+            return f"Prospect website context:\n{url_text}\n\nAdditional user guidance:\n{description}"
+        return url_text
+
+    if has_description:
+        return description
+
     raise HTTPException(status_code=400, detail="Provide either a description or a URL.")
 
 

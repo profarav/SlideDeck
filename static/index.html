@@ -70,32 +70,6 @@
 
     .input-panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
 
-    /* Input mode toggle */
-    .mode-toggle {
-      display: flex;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 3px;
-      gap: 3px;
-    }
-    .mode-btn {
-      flex: 1;
-      background: none;
-      border: none;
-      border-radius: 6px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 500;
-      padding: 7px 10px;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-    }
-    .mode-btn.active {
-      background: var(--accent);
-      color: #fff;
-    }
-
     textarea {
       width: 100%;
       height: 180px;
@@ -450,20 +424,15 @@
 <main>
   <!-- ── Input Panel ── -->
   <aside class="input-panel">
-    <h2>Prospect Description</h2>
-
-    <div class="mode-toggle">
-      <button class="mode-btn active" id="modeText" onclick="setMode('text')">✏️ Describe</button>
-      <button class="mode-btn" id="modeUrl" onclick="setMode('url')">🔗 Paste URL</button>
-    </div>
+    <h2>Prospect Input</h2>
 
     <textarea id="prospect" placeholder="Describe the prospect in plain English…
 
 e.g. 'We're pitching to a Series B fintech startup building embedded payments for e-commerce. They have a modern, clean brand and need help with their investor deck.'"></textarea>
 
-    <div class="url-input-wrap" id="urlWrap" style="display:none">
+    <div class="url-input-wrap" id="urlWrap">
       <span class="url-icon">🔗</span>
-      <input class="url-input" id="prospectUrl" type="url" placeholder="https://prospect.com — we'll read their site" />
+      <input class="url-input" id="prospectUrl" type="url" placeholder="https://prospect.com — optional, we'll read their site too" />
     </div>
 
     <div class="controls">
@@ -539,25 +508,15 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
 
 <script>
   let lastSlideNumbers = [];
-  let currentMode = 'text';
-
-  function setMode(mode) {
-    currentMode = mode;
-    document.getElementById('modeText').classList.toggle('active', mode === 'text');
-    document.getElementById('modeUrl').classList.toggle('active', mode === 'url');
-    document.getElementById('prospect').style.display = mode === 'text' ? 'block' : 'none';
-    document.getElementById('urlWrap').style.display = mode === 'url' ? 'block' : 'none';
-  }
 
   function setExample(btn) {
-    setMode('text');
     document.getElementById('prospect').value = btn.textContent.trim();
     document.getElementById('prospect').focus();
   }
 
   function _getInput() {
-    const description = currentMode === 'text' ? document.getElementById('prospect').value.trim() : '';
-    const url = currentMode === 'url' ? document.getElementById('prospectUrl').value.trim() : '';
+    const description = document.getElementById('prospect').value.trim();
+    const url = document.getElementById('prospectUrl').value.trim();
     return { description, url };
   }
 
@@ -579,7 +538,7 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     const nResults = parseInt(document.getElementById('nResults').value) || 4;
     const { description, url } = _getInput();
     if (!description && !url) {
-      (currentMode === 'text' ? document.getElementById('prospect') : document.getElementById('prospectUrl')).focus();
+      document.getElementById('prospect').focus();
       return;
     }
     _clearResults();
@@ -611,7 +570,7 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     const nResults = parseInt(document.getElementById('nResults').value) || 4;
     const { description, url } = _getInput();
     if (!description && !url) {
-      (currentMode === 'text' ? document.getElementById('prospect') : document.getElementById('prospectUrl')).focus();
+      document.getElementById('prospect').focus();
       return;
     }
     _clearResults();
@@ -792,6 +751,9 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
 
   // Submit on Cmd/Ctrl+Enter
   document.getElementById('prospect').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runSearch();
+  });
+  document.getElementById('prospectUrl').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runSearch();
   });
 </script>
