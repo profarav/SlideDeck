@@ -78,9 +78,9 @@ def _load_slides() -> list[dict]:
         # Sheet service_type/category is authoritative (range-based, from Excel)
         enriched["service_type"] = sheet.get("service_type", enriched.get("service_type", ""))
         enriched["service_category"] = sheet.get("service_category", enriched.get("service_category", ""))
-        # Use sheet client name when vision returned Unknown or empty
-        if enriched.get("client", "").lower() in ("unknown", ""):
-            enriched["client"] = sheet.get("client", enriched.get("client", "Unknown"))
+        # Sheet client name is authoritative — vision frequently misreads or abbreviates
+        if sheet.get("client"):
+            enriched["client"] = sheet["client"]
         # Append curated sheet content to vision text for keyword matching
         sheet_content = sheet.get("content", "")
         if sheet_content and sheet_content not in enriched.get("text", ""):
