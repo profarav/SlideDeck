@@ -393,6 +393,43 @@
       color: #fb923c;
     }
 
+    /* Cutoff slider row */
+    .cutoff-row { display: flex; align-items: center; gap: 10px; }
+    .cutoff-slider {
+      flex: 1;
+      accent-color: var(--accent);
+      height: 4px;
+      cursor: pointer;
+    }
+    .cutoff-label {
+      font-size: 13px;
+      color: var(--accent2);
+      width: 36px;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    /* Example cards */
+    .slide-range-badge {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 8px;
+      white-space: nowrap;
+    }
+    .n-slides-note {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .below-cutoff-note {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 12px;
+    }
+
     /* Score bar */
     .score-row { display: flex; align-items: center; gap: 10px; }
     .score-bar-bg {
@@ -548,11 +585,17 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     <div class="controls">
       <span class="n-label">Show</span>
       <input class="n-input" id="nResults" type="number" value="4" min="1" max="20" />
-      <span class="n-label">cases</span>
+      <span class="n-label">examples</span>
       <button class="btn" id="searchBtn" onclick="runSearch()">
         <div class="spinner"></div>
-        <span class="btn-text">Find Slides</span>
+        <span class="btn-text">Find Examples</span>
       </button>
+    </div>
+
+    <div class="cutoff-row">
+      <span class="n-label">Min relevance</span>
+      <input type="range" id="cutoffSlider" min="0" max="100" value="50" class="cutoff-slider" />
+      <span class="cutoff-label" id="cutoffLabel">50%</span>
     </div>
     <button class="btn" id="deckBtn" onclick="runBuildDeck()" style="background: linear-gradient(135deg, #7c6fff, #a78bfa);">
       <div class="spinner"></div>
@@ -630,7 +673,7 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
 <div class="toast" id="toast">Slide numbers copied!</div>
 
 <script>
-  const HISTORY_KEY = 'klimt_slide_history_v1';
+  const HISTORY_KEY = 'klimt_slide_history_v2';
   const HISTORY_LIMIT = 25;
 
   let lastSlideNumbers = [];
@@ -640,6 +683,7 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
   let lastRequestPayload = null;
   let lastResponsePayload = null;
   let lastVisibleCaseStudyNumbers = [];
+  let cutoffPct = 50;
 
   function setExample(btn) {
     document.getElementById('prospect').value = btn.textContent.trim();
@@ -669,9 +713,10 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
 
   function _setControlLoading(loading) {
     const ids = ['applyControlsBtn', 'moreLikeThisBtn', 'resetControlsBtn'];
+    const inDeckMode = currentMode === 'deck';
     ids.forEach(id => {
       const btn = document.getElementById(id);
-      btn.disabled = loading || !lastVisibleCaseStudyNumbers.length;
+      btn.disabled = loading || !inDeckMode || !lastVisibleCaseStudyNumbers.length;
     });
   }
 
@@ -697,19 +742,36 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     document.getElementById('personaCard').classList.add('visible');
   }
 
+  function _rangeSlideNumbers(example) {
+    const nums = [];
+    for (let i = example.slide_range[0]; i <= example.slide_range[1]; i++) nums.push(String(i));
+    return nums;
+  }
+
   function _extractCaseStudyNumbers(data, mode) {
     if (mode === 'search') {
-      return (data.slides || []).map(s => s.slide_number);
+      const shown = _applyExampleCutoff(data.examples || []);
+      return shown.flatMap(_rangeSlideNumbers);
     }
     const caseSection = (data.sections || []).find(s => s.label === 'Case Studies');
     return caseSection ? caseSection.slides.map(s => s.slide_number) : [];
   }
 
+  function _applyExampleCutoff(examples) {
+    const nResults = parseInt(document.getElementById('nResults').value, 10) || 4;
+    return examples
+      .filter(e => Math.round((e.score || 0) * 100) >= cutoffPct)
+      .slice(0, nResults);
+  }
+
   function _updateHeaderTitle(data, mode) {
     if (mode === 'search') {
-      const slides = data.slides || [];
-      document.getElementById('resultsTitle').textContent =
-        `${slides.length} Case Stud${slides.length === 1 ? 'y' : 'ies'} Found`;
+      const all = data.examples || [];
+      const shown = _applyExampleCutoff(all);
+      const below = all.length - shown.length;
+      let title = `${shown.length} Example${shown.length === 1 ? '' : 's'} Found`;
+      if (below > 0) title += ` · ${below} below cutoff`;
+      document.getElementById('resultsTitle').textContent = title;
       return;
     }
     document.getElementById('resultsTitle').textContent = `Full Deck — ${data.total_slides || 0} Slides`;
@@ -724,10 +786,10 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     grid.innerHTML = '';
 
     if (mode === 'search') {
-      const slides = data.slides || [];
-      lastSlideNumbers = slides.map(s => s.slide_number);
-      slides.forEach((slide, idx) => {
-        grid.innerHTML += buildCardHtml(slide, idx, { isCaseStudy: true });
+      const shown = _applyExampleCutoff(data.examples || []);
+      lastSlideNumbers = shown.flatMap(_rangeSlideNumbers);
+      shown.forEach((example, idx) => {
+        grid.innerHTML += buildExampleCardHtml(example, idx);
       });
       return;
     }
@@ -961,6 +1023,43 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
     }
   }
 
+  function buildExampleCardHtml(example, idx) {
+    const delay = idx * 50;
+    const scorePercent = Math.round((example.score || 0) * 100);
+    const rangeLabel = example.slide_range[0] === example.slide_range[1]
+      ? `Slide ${example.slide_range[0]}`
+      : `Slides ${example.slide_range[0]}–${example.slide_range[1]}`;
+    const imgHtml = example.image_url
+      ? `<div class="slide-img-wrap">
+           <img src="${escHtml(example.image_url)}" alt="${escHtml(example.client)}" loading="lazy" />
+           <a class="slide-img-open" href="${escHtml(example.image_url)}" target="_blank" rel="noopener">↗ Open</a>
+         </div>`
+      : `<div class="slide-img-wrap"><div class="slide-img-placeholder">No image</div></div>`;
+    return `
+      <div class="slide-card" style="animation-delay:${delay}ms">
+        ${imgHtml}
+        <div class="card-body">
+          <div class="card-top">
+            <span class="rank-badge">#${idx + 1}</span>
+            <span class="slide-range-badge">${escHtml(rangeLabel)} · ${example.n_slides} slide${example.n_slides === 1 ? '' : 's'}</span>
+          </div>
+          <div class="client-name">${escHtml(example.client)}</div>
+          <div class="why-text">${escHtml(example.why || '')}</div>
+          <div class="card-tags">
+            <span class="tag-industry">${escHtml(example.industry)}</span>
+            <span class="tag-service">${escHtml(example.service_type)}</span>
+            <span class="tag-style">${escHtml(example.visual_style)}</span>
+          </div>
+          <div class="score-row">
+            <div class="score-bar-bg">
+              <div class="score-bar-fill" style="width:${scorePercent}%"></div>
+            </div>
+            <span class="score-text">${scorePercent}%</span>
+          </div>
+        </div>
+      </div>`;
+  }
+
   function buildCardHtml(slide, idx, opts = {}) {
     const delay = idx * 50;
     const scorePercent = Math.round((slide.score || 1) * 100);
@@ -1168,6 +1267,23 @@ e.g. 'We're pitching to a Series B fintech startup building embedded payments fo
   });
   document.getElementById('prospectUrl').addEventListener('keydown', e => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runSearch();
+  });
+
+  // Cutoff slider — re-filters client-side, no API call
+  document.getElementById('cutoffSlider').addEventListener('input', e => {
+    cutoffPct = +e.target.value;
+    document.getElementById('cutoffLabel').textContent = cutoffPct + '%';
+    if (lastResponsePayload && currentMode === 'search') {
+      _updateHeaderTitle(lastResponsePayload, 'search');
+      const grid = document.getElementById('slidesGrid');
+      grid.innerHTML = '';
+      const shown = _applyExampleCutoff(lastResponsePayload.examples || []);
+      lastSlideNumbers = shown.flatMap(_rangeSlideNumbers);
+      lastVisibleCaseStudyNumbers = [...lastSlideNumbers];
+      shown.forEach((example, idx) => {
+        grid.innerHTML += buildExampleCardHtml(example, idx);
+      });
+    }
   });
 
   renderHistory();

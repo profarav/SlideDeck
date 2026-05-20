@@ -27,7 +27,7 @@ from pydantic import BaseModel, Field
 
 from deck_builder import build_full_deck, refine_full_deck
 from profiler import build_search_persona
-from retriever import retrieve_case_studies, retrieve_case_studies_with_controls
+from retriever import retrieve_case_studies, retrieve_case_studies_with_controls, retrieve_examples
 
 _BASE = Path(__file__).parent
 _STATIC_DIR = _BASE / "static"
@@ -159,6 +159,28 @@ class SlideResult(BaseModel):
     why: str = ""
 
 
+def _to_example_result(e: dict) -> ExampleResult:
+    rep_slide = {"slide_number": e["representative_slide"], "filename": ""}
+    # Try to find the actual filename from the representative slide in the example's slides list
+    for s in e.get("_slides", []):
+        if str(s["slide_number"]) == str(e["representative_slide"]):
+            rep_slide = s
+            break
+    return ExampleResult(
+        client=e.get("client", "Unknown"),
+        industry=e.get("industry", ""),
+        visual_style=e.get("visual_style", ""),
+        service_type=e.get("service_type", ""),
+        service_category=e.get("service_category", ""),
+        slide_range=e.get("slide_range", [0, 0]),
+        n_slides=e.get("n_slides", 1),
+        score=e.get("score", 0.0),
+        image_url=_image_url(rep_slide),
+        why=e.get("why", ""),
+        representative_slide=str(e.get("representative_slide", "")),
+    )
+
+
 def _to_slide_result(s: dict) -> SlideResult:
     return SlideResult(
         slide_number=s["slide_number"],
@@ -172,6 +194,25 @@ def _to_slide_result(s: dict) -> SlideResult:
         image_url=_image_url(s),
         why=s.get("why", ""),
     )
+
+
+class ExampleResult(BaseModel):
+    client: str
+    industry: str
+    visual_style: str
+    service_type: str
+    service_category: str
+    slide_range: list[int]
+    n_slides: int
+    score: float
+    image_url: str
+    why: str
+    representative_slide: str
+
+
+class ExamplesResponse(BaseModel):
+    persona: dict
+    examples: list[ExampleResult]
 
 
 class DeckResponse(BaseModel):
@@ -197,7 +238,7 @@ class ExportRequest(BaseModel):
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
-@app.post("/generate-deck", response_model=DeckResponse)
+@app.post("/generate-deck", response_model=ExamplesResponse)
 def generate_deck(req: ProspectRequest):
     description = _resolve_description(req.description.strip(), req.url.strip())
     try:
@@ -205,10 +246,10 @@ def generate_deck(req: ProspectRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
     try:
-        slides = retrieve_case_studies(persona, n_results=req.n_results)
+        examples = retrieve_examples(persona, n_results=req.n_results)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Retriever error: {e}")
-    return DeckResponse(persona=persona, slides=[_to_slide_result(s) for s in slides])
+    return ExamplesResponse(persona=persona, examples=[_to_example_result(e) for e in examples])
 
 
 @app.post("/build-deck", response_model=FullDeckResponse)

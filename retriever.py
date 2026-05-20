@@ -18,13 +18,76 @@ VISION_INDEX_PATH = str(Path(__file__).parent / "vision_index.json")
 _slides_cache: list[dict] | None = None
 
 
+def _parse_sheet_slide_numbers(sn: str) -> list[int]:
+    """Parse slide_index slide_number formats: '1-3', '4 & 6', '62 & 99-100'."""
+    nums: list[int] = []
+    for part in sn.replace("&", ",").split(","):
+        part = part.strip()
+        if "-" in part:
+            try:
+                lo, hi = map(int, part.split("-", 1))
+                nums.extend(range(lo, hi + 1))
+            except ValueError:
+                pass
+        elif part.isdigit():
+            nums.append(int(part))
+    return nums
+
+
 def _load_slides() -> list[dict]:
+    """
+    Always load both indices and merge them.
+    Vision index provides rich per-slide descriptions; sheet index provides
+    authoritative client names and curated content descriptions.
+    For slides where vision has 'Unknown' client, the sheet name is used.
+    Sheet content is appended to vision text for richer keyword matching.
+    Falls back to sheet-only if vision index is absent.
+    """
     global _slides_cache
-    if _slides_cache is None:
-        # Prefer vision index (per-slide accuracy) over the sheet-based index
-        path = VISION_INDEX_PATH if os.path.exists(VISION_INDEX_PATH) else INDEX_PATH
-        with open(path) as f:
-            _slides_cache = json.load(f)
+    if _slides_cache is not None:
+        return _slides_cache
+
+    # Build sheet lookup: slide_number (int) → sheet entry
+    sheet_map: dict[int, dict] = {}
+    if os.path.exists(INDEX_PATH):
+        with open(INDEX_PATH) as f:
+            sheet_entries = json.load(f)
+        for entry in sheet_entries:
+            for num in _parse_sheet_slide_numbers(str(entry.get("slide_number", ""))):
+                if num not in sheet_map:
+                    sheet_map[num] = entry
+
+    if not os.path.exists(VISION_INDEX_PATH):
+        _slides_cache = list(sheet_map.values()) if sheet_map else []
+        return _slides_cache
+
+    with open(VISION_INDEX_PATH) as f:
+        vision_slides = json.load(f)
+
+    merged: list[dict] = []
+    for slide in vision_slides:
+        sn = str(slide.get("slide_number", ""))
+        if not sn.isdigit():
+            merged.append(slide)
+            continue
+        sheet = sheet_map.get(int(sn))
+        if not sheet:
+            merged.append(slide)
+            continue
+        enriched = dict(slide)
+        # Sheet service_type/category is authoritative (range-based, from Excel)
+        enriched["service_type"] = sheet.get("service_type", enriched.get("service_type", ""))
+        enriched["service_category"] = sheet.get("service_category", enriched.get("service_category", ""))
+        # Use sheet client name when vision returned Unknown or empty
+        if enriched.get("client", "").lower() in ("unknown", ""):
+            enriched["client"] = sheet.get("client", enriched.get("client", "Unknown"))
+        # Append curated sheet content to vision text for keyword matching
+        sheet_content = sheet.get("content", "")
+        if sheet_content and sheet_content not in enriched.get("text", ""):
+            enriched["text"] = enriched.get("text", "") + " " + sheet_content
+        merged.append(enriched)
+
+    _slides_cache = merged
     return _slides_cache
 
 
@@ -306,3 +369,167 @@ def retrieve_case_studies(persona: dict, n_results: int = 8) -> list[dict]:
     ranked = _claude_rank(query, candidates, visual_style, service_categories, n=n_results)
 
     return ranked
+
+
+# ── Examples API ──────────────────────────────────────────────────────────────
+
+def _make_example(slides: list[dict]) -> dict:
+    sorted_slides = sorted(slides, key=lambda x: int(x["slide_number"]))
+    nums = [int(s["slide_number"]) for s in sorted_slides]
+    rep = sorted_slides[0]
+    text = " ".join(
+        (s.get("text", "") + " " + s.get("content", "")).strip()
+        for s in sorted_slides
+    )
+    return {
+        "client": rep.get("client", "Unknown"),
+        "service_type": rep.get("service_type", ""),
+        "service_category": rep.get("service_category", ""),
+        "industry": rep.get("industry", ""),
+        "visual_style": rep.get("visual_style", ""),
+        "slide_range": [min(nums), max(nums)],
+        "n_slides": len(sorted_slides),
+        "representative_slide": str(sorted_slides[0]["slide_number"]),
+        "_slides": sorted_slides,
+        "_text": text,
+        "score": 0.0,
+        "why": "",
+    }
+
+
+def _group_into_examples(slides: list[dict]) -> list[dict]:
+    """
+    Group slides into client examples by scanning sorted slide numbers.
+    A new group starts when client name, service_type, or slide gap (>5) changes.
+    """
+    sorted_slides = sorted(slides, key=lambda x: int(x["slide_number"]))
+    if not sorted_slides:
+        return []
+
+    groups: list[list[dict]] = [[sorted_slides[0]]]
+    for s in sorted_slides[1:]:
+        prev = groups[-1][-1]
+        same_client = s.get("client", "").lower() == prev.get("client", "").lower()
+        same_service = s.get("service_type", "") == prev.get("service_type", "")
+        gap = int(s["slide_number"]) - int(prev["slide_number"])
+        if same_client and same_service and gap <= 5:
+            groups[-1].append(s)
+        else:
+            groups.append([s])
+
+    return [_make_example(g) for g in groups]
+
+
+def _keyword_rank_examples(query: str, examples: list[dict], top_n: int) -> list[dict]:
+    if len(examples) <= top_n:
+        return examples
+    tokens = set(_re.findall(r"[a-z]+", query.lower()))
+    stopwords = {"a", "an", "the", "for", "of", "in", "on", "and", "or", "to", "with", "is", "are", "that", "this", "we", "our"}
+    tokens -= stopwords
+
+    def _score(e: dict) -> int:
+        blob = e.get("_text", "").lower()
+        return sum(1 for t in tokens if t in blob)
+
+    return sorted(examples, key=_score, reverse=True)[:top_n]
+
+
+def _claude_rank_examples(
+    query: str,
+    examples: list[dict],
+    visual_style: str,
+    service_categories: list[str],
+) -> list[dict]:
+    """Ask Claude to score and rank all candidate examples. Returns examples with score and why populated."""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    client = anthropic.Anthropic(api_key=api_key)
+
+    example_list = "\n".join(
+        f"[{i}] {e['client']} | {e['service_type']} | "
+        f"Slides {e['slide_range'][0]}–{e['slide_range'][1]} | {e['industry']} | {e['n_slides']} slides\n"
+        f"    {e['_text'][:120]}"
+        for i, e in enumerate(examples)
+    )
+
+    service_str = ", ".join(service_categories) if service_categories else "Not specified"
+
+    prompt = f"""You are a creative agency business development analyst for Klimt & Design.
+A salesperson needs client examples from the portfolio to show a prospect.
+
+Prospect needs: {query}
+Required work type: {service_str}
+Preferred visual style: {visual_style}
+
+Available case study examples:
+{example_list}
+
+Rank ALL examples and assign a strict relevance score. Only truly relevant examples should score above 0.7.
+
+Return a JSON object with exactly three keys:
+- "indices": array of ALL example indices ordered best-first
+- "scores": object mapping each index (as a string) to a 0.0–1.0 relevance score
+- "reasons": object mapping each index (as a string) to one sentence explaining the fit
+
+Example: {{"indices": [2, 0, 1], "scores": {{"2": 0.91, "0": 0.74, "1": 0.45}}, "reasons": {{"2": "Fintech landing page for a payments startup matches the prospect perfectly.", "0": "...", "1": "..."}}}}
+Return only the JSON object, nothing else."""
+
+    msg = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    raw = msg.content[0].text.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1].lstrip("json").strip()
+
+    indices: list[int] = []
+    scores: dict[str, float] = {}
+    reasons: dict[str, str] = {}
+    try:
+        obj = json.loads(raw)
+        if isinstance(obj, dict):
+            indices = obj.get("indices", [])
+            scores = {str(k): float(v) for k, v in obj.get("scores", {}).items()}
+            reasons = {str(k): v for k, v in obj.get("reasons", {}).items()}
+    except (json.JSONDecodeError, ValueError):
+        arr_match = _re.search(r"\[[\d,\s]+\]", raw)
+        if arr_match:
+            indices = json.loads(arr_match.group(0))
+
+    # If Claude omitted some indices, append them at the end with score 0.0
+    seen = set(indices)
+    for i in range(len(examples)):
+        if i not in seen:
+            indices.append(i)
+
+    results = []
+    for i in indices:
+        if not (isinstance(i, int) and 0 <= i < len(examples)):
+            continue
+        e = dict(examples[i])
+        e["score"] = round(scores.get(str(i), 0.0), 3)
+        e["why"] = reasons.get(str(i), "")
+        results.append(e)
+    return results
+
+
+def retrieve_examples(persona: dict, n_results: int = 8) -> list[dict]:
+    """
+    Retrieve and score client case study examples rather than individual slides.
+    Returns all scored examples (up to cap) sorted by score — caller applies cutoff.
+    """
+    filtered = _build_filtered_pool(persona)
+    examples = _group_into_examples(filtered)
+
+    query: str = persona["search_query"]
+    visual_style: str = persona["visual_style"]
+    service_categories: list[str] = persona.get("service_categories", [])
+
+    top_n = min(max(25, n_results * 4), len(examples))
+    candidates = _keyword_rank_examples(query, examples, top_n=top_n)
+
+    ranked = _claude_rank_examples(query, candidates, visual_style, service_categories)
+
+    cap = min(20, n_results * 3)
+    return sorted(ranked, key=lambda e: e["score"], reverse=True)[:cap]
