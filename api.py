@@ -159,28 +159,6 @@ class SlideResult(BaseModel):
     why: str = ""
 
 
-def _to_example_result(e: dict) -> ExampleResult:
-    rep_slide = {"slide_number": e["representative_slide"], "filename": ""}
-    # Try to find the actual filename from the representative slide in the example's slides list
-    for s in e.get("_slides", []):
-        if str(s["slide_number"]) == str(e["representative_slide"]):
-            rep_slide = s
-            break
-    return ExampleResult(
-        client=e.get("client", "Unknown"),
-        industry=e.get("industry", ""),
-        visual_style=e.get("visual_style", ""),
-        service_type=e.get("service_type", ""),
-        service_category=e.get("service_category", ""),
-        slide_range=e.get("slide_range", [0, 0]),
-        n_slides=e.get("n_slides", 1),
-        score=e.get("score", 0.0),
-        image_url=_image_url(rep_slide),
-        why=e.get("why", ""),
-        representative_slide=str(e.get("representative_slide", "")),
-    )
-
-
 def _to_slide_result(s: dict) -> SlideResult:
     return SlideResult(
         slide_number=s["slide_number"],
@@ -213,6 +191,27 @@ class ExampleResult(BaseModel):
 class ExamplesResponse(BaseModel):
     persona: dict
     examples: list[ExampleResult]
+
+
+def _to_example_result(e: dict) -> ExampleResult:
+    rep_slide = {"slide_number": e["representative_slide"], "filename": ""}
+    for s in e.get("_slides", []):
+        if str(s["slide_number"]) == str(e["representative_slide"]):
+            rep_slide = s
+            break
+    return ExampleResult(
+        client=e.get("client", "Unknown"),
+        industry=e.get("industry", ""),
+        visual_style=e.get("visual_style", ""),
+        service_type=e.get("service_type", ""),
+        service_category=e.get("service_category", ""),
+        slide_range=e.get("slide_range", [0, 0]),
+        n_slides=e.get("n_slides", 1),
+        score=e.get("score", 0.0),
+        image_url=_image_url(rep_slide),
+        why=e.get("why", ""),
+        representative_slide=str(e.get("representative_slide", "")),
+    )
 
 
 class DeckResponse(BaseModel):
