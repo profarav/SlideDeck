@@ -24,6 +24,9 @@ env/
 # Data files (too large for git / generated locally)
 chroma_db/
 
+# Google service account credentials — NEVER commit this
+service_account.json
+
 # OS
 .DS_Store
 Thumbs.db
