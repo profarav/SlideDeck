@@ -17,6 +17,21 @@ VISION_INDEX_PATH = str(Path(__file__).parent / "vision_index.json")
 
 _slides_cache: list[dict] | None = None
 
+# Slides whose "client" value is an agency-internal label rather than a real client.
+# These are section dividers, capability intros, agency overview slides, or slides where
+# vision couldn't identify the client — none of them should appear as case study examples.
+_EXCLUDE_CLIENTS: frozenset[str] = frozenset({
+    "Klimt & Design",
+    "Unknown",
+    # Sheet-level agency/section labels
+    "Intro", "Team", "Process", "Testimonials", "Clients",
+    "UX/UI Design", "Identity Design", "Interaction", "Information", "Content/Ads",
+    "Capability Intro", "Capabilities (Webflow & SEO)",
+    "SEO Offerings", "Pricing & Packages",
+    "Misc. Logos", "Paid Media / Ads",
+    "Stylescape", "Agency Portfolio",
+})
+
 
 def _parse_sheet_slide_numbers(sn: str) -> list[int]:
     """Parse slide_index slide_number formats: '1-3', '4 & 6', '62 & 99-100'."""
@@ -232,11 +247,11 @@ def _build_filtered_pool(persona: dict) -> list[dict]:
     if not filtered:
         filtered = slides
 
-    # Deduplicate filtered list by slide_number before ranking
+    # Deduplicate and strip agency-internal slides before ranking.
     seen_nums: set[str] = set()
     deduped: list[dict] = []
     for s in filtered:
-        if s["slide_number"] not in seen_nums:
+        if s["slide_number"] not in seen_nums and s.get("client") not in _EXCLUDE_CLIENTS:
             seen_nums.add(s["slide_number"])
             deduped.append(s)
     return deduped
@@ -410,7 +425,7 @@ def _group_into_examples(slides: list[dict]) -> list[dict]:
     for s in sorted_slides[1:]:
         prev = groups[-1][-1]
         same_client = s.get("client", "").lower() == prev.get("client", "").lower()
-        same_service = s.get("service_type", "") == prev.get("service_type", "")
+        same_service = s.get("service_category", "") == prev.get("service_category", "")
         gap = int(s["slide_number"]) - int(prev["slide_number"])
         if same_client and same_service and gap <= 5:
             groups[-1].append(s)
@@ -447,7 +462,7 @@ def _claude_rank_examples(
     example_list = "\n".join(
         f"[{i}] {e['client']} | {e['service_type']} | "
         f"Slides {e['slide_range'][0]}–{e['slide_range'][1]} | {e['industry']} | {e['n_slides']} slides\n"
-        f"    {e['_text'][:120]}"
+        f"    {e['_text'][:250]}"
         for i, e in enumerate(examples)
     )
 
