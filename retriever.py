@@ -18,12 +18,14 @@ VISION_INDEX_PATH = str(Path(__file__).parent / "vision_index.json")
 
 _slides_cache: list[dict] | None = None
 
-# A sheet row that spans this many slides or more is treated as a multi-company
-# "showcase" range (a portfolio grab-bag under one generic heading) rather than a
-# single client. See _load_slides for how the two regimes are merged. Real single
-# clients in this library never exceed five slides in one row; every longer row is a
-# section header or a vertical showcase bundling many different companies.
-_SHOWCASE_MIN_SLIDES = 6
+# The Master Sheet was authored for an older, shorter cut of the deck, so its
+# slide-number ranges only line up with the actual slides through the front of the
+# deck. Past this slide number the rows describe DIFFERENT slides than are really
+# there (verified against the PNGs: e.g. the "ClarityPay" row lands on the Denim
+# slide; "Recuro Health / Healthcare" lands on the Ivana Asset finance deck). Up to
+# here the sheet is trusted for client + industry; beyond it, vision (which reads the
+# actual image) is trusted instead. See _load_slides.
+_SHEET_ALIGNED_MAX_SLIDE = 98
 
 # Client values that must never surface as a case study example. Two groups:
 #   1. Agency-internal section headers (short sheet rows: intro, team, pricing, …) —
@@ -63,12 +65,15 @@ def _parse_sheet_slide_numbers(sn: str) -> list[int]:
 
 def _load_slides() -> list[dict]:
     """
-    Always load both indices and merge them.
-    Vision index provides rich per-slide descriptions; sheet index provides
-    authoritative client names and curated content descriptions.
-    For slides where vision has 'Unknown' client, the sheet name is used.
-    Sheet content is appended to vision text for richer keyword matching.
-    Falls back to sheet-only if vision index is absent.
+    Load and merge the vision index (per-slide image analysis) with the Master Sheet
+    index (curated client/industry/content).
+
+    The two are aligned only through the front of the deck; the sheet was authored for
+    an older, shorter cut, so from ~slide _SHEET_ALIGNED_MAX_SLIDE its rows drift onto
+    the wrong slides. So we trust the sheet's client + industry for the aligned front
+    and fall back to vision's image-derived values for the drifted back. Service
+    category (position-based) and the vision text blob are used throughout.
+    Falls back to sheet-only if the vision index is absent.
     """
     global _slides_cache
     if _slides_cache is not None:
@@ -102,36 +107,31 @@ def _load_slides() -> list[dict]:
             merged.append(slide)
             continue
         enriched = dict(slide)
-        # Sheet service_type/category is authoritative for both regimes (range-based
-        # taxonomy from Excel; a whole range is one type of work).
+        # Service type/category is a position-based taxonomy (get_service_tags keyed on
+        # slide number). Sheet and vision compute it identically, and the deck's
+        # work-type sections stay broadly stable despite the drift below, so it is kept
+        # from the sheet for every slide.
         enriched["service_type"] = sheet.get("service_type", enriched.get("service_type", ""))
         enriched["service_category"] = sheet.get("service_category", enriched.get("service_category", ""))
 
-        # Sheet industry is authoritative for every sheet-backed slide. It is
-        # human-curated and consistent, whereas vision assigns industry per-slide from
-        # the image and disagrees ~85% of the time — pure noise that scattered one
-        # client across many industries. Industry is a hard Stage-1 filter dimension, so
-        # a predictable curator-intended tag beats vision's scatter (including inside
-        # showcase ranges, where the umbrella reflects how the deck author grouped them).
-        if sheet.get("industry"):
-            enriched["industry"] = sheet["industry"]
-
-        # Client name uses two regimes based on how many slides the sheet row spans:
-        is_showcase = len(_parse_sheet_slide_numbers(str(sheet.get("slide_number", "")))) >= _SHOWCASE_MIN_SLIDES
-        if not is_showcase and sheet.get("client"):
-            # Single-client row: the sheet name is the real client and is cleaner than
-            # vision (which misreads/abbreviates), so it is authoritative.
-            enriched["client"] = sheet["client"]
-        # Showcase row (>= _SHOWCASE_MIN_SLIDES): the sheet packs many different companies
-        # under one generic label ("Consumer Brands", "UX/UI Deep Dive"), so its single
-        # client name is useless. Keep vision's per-slide company name so the range splits
-        # into real, individually-named examples instead of one mislabelled blob.
-        # Unnamed / hallucinated vision clients are dropped later via _EXCLUDE_CLIENTS.
-
-        # Append curated sheet content to vision text for keyword matching
-        sheet_content = sheet.get("content", "")
-        if sheet_content and sheet_content not in enriched.get("text", ""):
-            enriched["text"] = enriched.get("text", "") + " " + sheet_content
+        if int(sn) <= _SHEET_ALIGNED_MAX_SLIDE:
+            # Front of the deck: the sheet's slide numbers line up with the real slides,
+            # and its curated client + industry are cleaner and more consistent than
+            # vision (which yields Unknowns and per-slide industry flips). Trust the sheet
+            # and enrich the keyword blob with its curated content.
+            if sheet.get("industry"):
+                enriched["industry"] = sheet["industry"]
+            if sheet.get("client"):
+                enriched["client"] = sheet["client"]
+            sheet_content = sheet.get("content", "")
+            if sheet_content and sheet_content not in enriched.get("text", ""):
+                enriched["text"] = enriched.get("text", "") + " " + sheet_content
+        # Back of the deck (slide > _SHEET_ALIGNED_MAX_SLIDE): the sheet row describes a
+        # DIFFERENT slide than is actually here, so grafting on its client/industry/content
+        # would mislabel the slide (this is what put finance decks under "Healthcare").
+        # Vision reads the real image, so its client + industry + text are the aligned
+        # source and are kept untouched. Unnamed/hallucinated vision clients are dropped
+        # downstream via _EXCLUDE_CLIENTS.
         merged.append(enriched)
 
     _slides_cache = merged
@@ -260,7 +260,10 @@ def _build_filtered_pool(persona: dict) -> list[dict]:
       Level 4: General Agency slides        (agency overview fallback)
       Level 5: entire library               (last resort)
     """
-    slides = _load_slides()
+    # Strip agency-internal / unnamed / hallucinated clients up front so the fallback
+    # levels below count only presentable slides. (Doing this after the fallback let a
+    # level fill with all-excluded slides, suppress Level 5, then dedup to nothing.)
+    slides = [s for s in _load_slides() if s.get("client") not in _EXCLUDE_CLIENTS]
     industries: list[str] = persona["industries"]
     service_categories: list[str] = persona.get("service_categories", [])
 
@@ -295,11 +298,11 @@ def _build_filtered_pool(persona: dict) -> list[dict]:
     if not filtered:
         filtered = slides
 
-    # Deduplicate and strip agency-internal slides before ranking.
+    # Deduplicate by slide number (exclusion already applied to `slides` above).
     seen_nums: set[str] = set()
     deduped: list[dict] = []
     for s in filtered:
-        if s["slide_number"] not in seen_nums and s.get("client") not in _EXCLUDE_CLIENTS:
+        if s["slide_number"] not in seen_nums:
             seen_nums.add(s["slide_number"])
             deduped.append(s)
     return deduped
