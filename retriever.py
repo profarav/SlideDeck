@@ -7,6 +7,7 @@ Retriever — three-dimension pipeline:
 import json
 import os
 import re as _re
+from collections import Counter
 from pathlib import Path
 
 import anthropic
@@ -17,19 +18,30 @@ VISION_INDEX_PATH = str(Path(__file__).parent / "vision_index.json")
 
 _slides_cache: list[dict] | None = None
 
-# Slides whose "client" value is an agency-internal label rather than a real client.
-# These are section dividers, capability intros, agency overview slides, or slides where
-# vision couldn't identify the client — none of them should appear as case study examples.
+# A sheet row that spans this many slides or more is treated as a multi-company
+# "showcase" range (a portfolio grab-bag under one generic heading) rather than a
+# single client. See _load_slides for how the two regimes are merged. Real single
+# clients in this library never exceed five slides in one row; every longer row is a
+# section header or a vertical showcase bundling many different companies.
+_SHOWCASE_MIN_SLIDES = 6
+
+# Client values that must never surface as a case study example. Two groups:
+#   1. Agency-internal section headers (short sheet rows: intro, team, pricing, …) —
+#      these are fly sheets, not client work.
+#   2. Vision misreads / placeholders that leak in from showcase ranges (UI chrome it
+#      mistook for a brand, lorem-ipsum, redaction markers).
 _EXCLUDE_CLIENTS: frozenset[str] = frozenset({
     "Klimt & Design",
     "Unknown",
-    # Sheet-level agency/section labels
+    # Agency/section headers (short single-client-regime rows)
     "Intro", "Team", "Process", "Testimonials", "Clients",
     "UX/UI Design", "Identity Design", "Interaction", "Information", "Content/Ads",
-    "Capability Intro", "Capabilities (Webflow & SEO)",
-    "SEO Offerings", "Pricing & Packages",
+    "Capability Intro", "SEO Offerings", "Pricing & Packages",
     "Misc. Logos", "Paid Media / Ads",
-    "Stylescape", "Agency Portfolio",
+    "Stylescape", "Color & Palette", "Logo Concepts", "Team & Workflow",
+    # Vision-hallucinated placeholders (never real clients)
+    "Gmail", "Okta", "ACME", "ACME Inc.", "ACME Insight", "amet", "Redacted",
+    "YOUR BRAND", "ario", "hinlab", "Bookkeeping Software", "ABC Offer",
 })
 
 
@@ -90,12 +102,32 @@ def _load_slides() -> list[dict]:
             merged.append(slide)
             continue
         enriched = dict(slide)
-        # Sheet service_type/category is authoritative (range-based, from Excel)
+        # Sheet service_type/category is authoritative for both regimes (range-based
+        # taxonomy from Excel; a whole range is one type of work).
         enriched["service_type"] = sheet.get("service_type", enriched.get("service_type", ""))
         enriched["service_category"] = sheet.get("service_category", enriched.get("service_category", ""))
-        # Sheet client name is authoritative — vision frequently misreads or abbreviates
-        if sheet.get("client"):
+
+        # Sheet industry is authoritative for every sheet-backed slide. It is
+        # human-curated and consistent, whereas vision assigns industry per-slide from
+        # the image and disagrees ~85% of the time — pure noise that scattered one
+        # client across many industries. Industry is a hard Stage-1 filter dimension, so
+        # a predictable curator-intended tag beats vision's scatter (including inside
+        # showcase ranges, where the umbrella reflects how the deck author grouped them).
+        if sheet.get("industry"):
+            enriched["industry"] = sheet["industry"]
+
+        # Client name uses two regimes based on how many slides the sheet row spans:
+        is_showcase = len(_parse_sheet_slide_numbers(str(sheet.get("slide_number", "")))) >= _SHOWCASE_MIN_SLIDES
+        if not is_showcase and sheet.get("client"):
+            # Single-client row: the sheet name is the real client and is cleaner than
+            # vision (which misreads/abbreviates), so it is authoritative.
             enriched["client"] = sheet["client"]
+        # Showcase row (>= _SHOWCASE_MIN_SLIDES): the sheet packs many different companies
+        # under one generic label ("Consumer Brands", "UX/UI Deep Dive"), so its single
+        # client name is useless. Keep vision's per-slide company name so the range splits
+        # into real, individually-named examples instead of one mislabelled blob.
+        # Unnamed / hallucinated vision clients are dropped later via _EXCLUDE_CLIENTS.
+
         # Append curated sheet content to vision text for keyword matching
         sheet_content = sheet.get("content", "")
         if sheet_content and sheet_content not in enriched.get("text", ""):
@@ -106,25 +138,41 @@ def _load_slides() -> list[dict]:
     return _slides_cache
 
 
+_STOPWORDS = frozenset({
+    "a", "an", "the", "for", "of", "in", "on", "and", "or", "to", "with", "is",
+    "are", "that", "this", "we", "our", "their", "they", "it", "its", "as", "at",
+    "by", "be", "from", "need", "needs", "want", "looking", "help",
+})
+
+
+def _query_tokens(query: str) -> set[str]:
+    """Whole-word query tokens with stopwords and single characters removed."""
+    return {t for t in _re.findall(r"[a-z][a-z0-9]+", query.lower()) if t not in _STOPWORDS}
+
+
+def _keyword_score(tokens: set[str], text: str) -> int:
+    """
+    Frequency-weighted overlap between query tokens and a text blob, matched on
+    whole words. Whole-word matching matters: a substring test lets short tokens
+    like "ai" or "ux" match "captain"/"email"/"auxiliary", which polluted the
+    pre-rank and could drop genuinely relevant slides before Claude ever saw them.
+    """
+    if not tokens:
+        return 0
+    counts = Counter(_re.findall(r"[a-z][a-z0-9]+", text.lower()))
+    return sum(counts[t] for t in tokens)
+
+
 def _keyword_rank(query: str, candidates: list[dict], top_n: int) -> list[dict]:
     """
     Fast keyword pre-filter to trim candidate list before Claude ranking.
-    Scores each candidate by counting how many query tokens appear in its text blob.
     No external dependencies — pure Python, safe for Vercel's 250 MB limit.
     """
     if len(candidates) <= top_n:
         return candidates
 
-    tokens = set(_re.findall(r"[a-z]+", query.lower()))
-    # Remove common stopwords
-    stopwords = {"a", "an", "the", "for", "of", "in", "on", "and", "or", "to", "with", "is", "are", "that", "this", "we", "our"}
-    tokens -= stopwords
-
-    def _score(c: dict) -> int:
-        blob = c.get("text", "").lower()
-        return sum(1 for t in tokens if t in blob)
-
-    scored = sorted(candidates, key=_score, reverse=True)
+    tokens = _query_tokens(query)
+    scored = sorted(candidates, key=lambda c: _keyword_score(tokens, c.get("text", "")), reverse=True)
     return scored[:top_n]
 
 
@@ -415,7 +463,7 @@ def _make_example(slides: list[dict]) -> dict:
 def _group_into_examples(slides: list[dict]) -> list[dict]:
     """
     Group slides into client examples by scanning sorted slide numbers.
-    A new group starts when client name, service_type, or slide gap (>5) changes.
+    A new group starts when client name, service_category, or slide gap (>5) changes.
     """
     sorted_slides = sorted(slides, key=lambda x: int(x["slide_number"]))
     if not sorted_slides:
@@ -438,15 +486,8 @@ def _group_into_examples(slides: list[dict]) -> list[dict]:
 def _keyword_rank_examples(query: str, examples: list[dict], top_n: int) -> list[dict]:
     if len(examples) <= top_n:
         return examples
-    tokens = set(_re.findall(r"[a-z]+", query.lower()))
-    stopwords = {"a", "an", "the", "for", "of", "in", "on", "and", "or", "to", "with", "is", "are", "that", "this", "we", "our"}
-    tokens -= stopwords
-
-    def _score(e: dict) -> int:
-        blob = e.get("_text", "").lower()
-        return sum(1 for t in tokens if t in blob)
-
-    return sorted(examples, key=_score, reverse=True)[:top_n]
+    tokens = _query_tokens(query)
+    return sorted(examples, key=lambda e: _keyword_score(tokens, e.get("_text", "")), reverse=True)[:top_n]
 
 
 def _claude_rank_examples(
@@ -545,6 +586,19 @@ def retrieve_examples(persona: dict, n_results: int = 8) -> list[dict]:
     candidates = _keyword_rank_examples(query, examples, top_n=top_n)
 
     ranked = _claude_rank_examples(query, candidates, visual_style, service_categories)
+    ranked.sort(key=lambda e: e["score"], reverse=True)
+
+    # One example per client. The 101-200 "second pass" reuses real client names
+    # (Pantera, Guru, LightOn …) as section labels over unrelated grab-bag content,
+    # so a client can otherwise appear two or three times. Keep the highest-scored.
+    deduped: list[dict] = []
+    seen_clients: set[str] = set()
+    for e in ranked:
+        key = e.get("client", "").strip().lower()
+        if key and key in seen_clients:
+            continue
+        seen_clients.add(key)
+        deduped.append(e)
 
     cap = min(20, n_results * 3)
-    return sorted(ranked, key=lambda e: e["score"], reverse=True)[:cap]
+    return deduped[:cap]
