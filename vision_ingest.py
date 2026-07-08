@@ -24,7 +24,13 @@ import anthropic
 from PIL import Image
 from dotenv import load_dotenv
 
-from tags import normalize_industry, normalize_visual_style, get_service_tags, CANONICAL_SERVICE_CATEGORIES
+from tags import (
+    normalize_industry,
+    normalize_visual_style,
+    get_service_tags,
+    CANONICAL_INDUSTRIES,
+    CANONICAL_SERVICE_CATEGORIES,
+)
 
 load_dotenv()
 
@@ -33,14 +39,18 @@ RESIZE_TO = (800, 450)
 MAX_WORKERS = 10
 MODEL = "claude-haiku-4-5"   # Faster + cheaper for vision extraction
 
-_SYSTEM_PROMPT = """You are analyzing portfolio slides from Klimt & Design, a premium design agency.
-For each slide image, extract exactly 3 fields and return ONLY valid JSON — no other text.
+# Vision judges industry directly from the slide. This is far more reliable than
+# keyword-matching the prose description after the fact — that mislabels heavily because
+# design-agency descriptions are saturated with generic words ("design", "data", "ai").
+_SYSTEM_PROMPT = f"""You are analyzing portfolio slides from Klimt & Design, a premium design agency.
+For each slide image, extract exactly 4 fields and return ONLY valid JSON — no other text.
 
-{
+{{
   "client": "<company or project name visible on the slide, or 'Klimt & Design' if it's an agency overview slide, or 'Unknown' if unclear>",
+  "industry": "<the client's industry — choose the single closest match from this list: {', '.join(CANONICAL_INDUSTRIES)}. Use 'General Agency' only for Klimt's own agency/overview slides>",
   "content_description": "<2-3 sentences describing exactly what design work this slide shows — UI screens, brand elements, copy, layout, key visuals>",
   "visual_style_raw": "<1 sentence: dominant colors, typography style, mood, aesthetic>"
-}"""
+}}"""
 
 
 def _slide_num_from_filename(filename: str) -> int:
@@ -109,8 +119,15 @@ def _analyze_slide(client_api: anthropic.Anthropic, slide_path: Path) -> dict:
         extracted.get("content_description", ""),
         extracted.get("visual_style_raw", ""),
     )
-    industry_raw = extracted.get("content_description", "")
-    industry = normalize_industry(f"{extracted.get('client', '')} {industry_raw}")
+    # Prefer the industry vision picked directly from the image; fall back to keyword
+    # derivation only if it omitted the field or returned something off-list.
+    vision_industry = str(extracted.get("industry", "")).strip()
+    if vision_industry in CANONICAL_INDUSTRIES:
+        industry = vision_industry
+    else:
+        industry = normalize_industry(
+            f"{extracted.get('client', '')} {extracted.get('content_description', '')}"
+        )
     visual_style = normalize_visual_style(extracted.get("visual_style_raw", ""))
 
     return {

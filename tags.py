@@ -3,6 +3,20 @@ Canonical tag lists and keyword-based normalization for industries and visual st
 These are derived from the actual content in Master Sheet.xlsx.
 """
 
+import re
+
+
+def _contains_keyword(text: str, keyword: str) -> bool:
+    """
+    True if `keyword` appears in `text` as a whole token (bounded by string edges or
+    non-alphanumeric chars). A plain substring test caused rampant false positives —
+    "ai" matched maintain/email/detail, "hr" matched three/through, "vc" matched
+    service, "action" matched transaction — which over-tagged unrelated slides. Internal
+    punctuation in a keyword (e.g. "point-of-sale", "m.ink") is matched literally.
+    """
+    return re.search(rf"(?<![a-z0-9]){re.escape(keyword)}(?![a-z0-9])", text) is not None
+
+
 # ── Canonical Industry Tags ────────────────────────────────────────────────────
 
 CANONICAL_INDUSTRIES = [
@@ -43,7 +57,7 @@ _INDUSTRY_KEYWORDS: list[tuple[str, list[str]]] = [
     ("B2B SaaS",                     ["saas", "b2b", "invoice butler", "formspree", "fuel to fly", "codethread", "lumina", "kawin"]),
     ("AI & Technology",              ["ai", "artificial intelligence", "devtools", "enterprise ai", "video ai", "lighton", "humanfirst", "guru", "sketchpro", "pantera", "codegen"]),
     ("PropTech",                     ["proptech", "real estate", "property"]),
-    ("Branding & Design",            ["branding", "design", "logo", "identity", "stylescape", "sohva", "secludy", "sona padel"]),
+    ("Branding & Design",            ["branding", "logo", "identity", "stylescape", "sohva", "secludy", "sona padel"]),
     ("Education & EdTech",           ["edtech", "education", "nursing", "school", "crna", "diocese"]),
     ("Energy & Sustainability",      ["energy", "sustainability", "renewable", "solar", "wind"]),
     ("Cybersecurity",                ["cybersecurity", "security", "cyber", "cyber whyze"]),
@@ -51,7 +65,7 @@ _INDUSTRY_KEYWORDS: list[tuple[str, list[str]]] = [
     ("Web3 & Crypto",                ["web3", "crypto", "blockchain", "token", "livepeer", "limitless"]),
     ("Travel & Hospitality",         ["travel", "hospitality", "event", "ticketing", "playstay"]),
     ("Sports & Athletics",           ["sports", "athletics", "fitness", "running", "atlas", "padres", "nike"]),
-    ("Data & Analytics",             ["data", "analytics", "adtech", "advertising", "cookie"]),
+    ("Data & Analytics",             ["analytics", "adtech", "advertising", "cookie", "data visualization", "data platform", "data-driven"]),
     ("Operations & Logistics",       ["operations", "logistics", "ops", "ulta", "clickup"]),
     ("Maritime",                     ["maritime", "payroll", "seafare"]),
     ("General Agency",               ["general", "agency", "capabilities", "klimt"]),
@@ -62,7 +76,7 @@ def normalize_industry(raw: str) -> str:
     """Map a free-text industry string to the nearest canonical tag."""
     lower = raw.lower()
     for canonical, keywords in _INDUSTRY_KEYWORDS:
-        if any(k in lower for k in keywords):
+        if any(_contains_keyword(lower, k) for k in keywords):
             return canonical
     return "General Agency"
 
@@ -104,7 +118,7 @@ def normalize_visual_style(raw: str) -> str:
     """Map a free-text visual style string to the nearest canonical tag."""
     lower = raw.lower()
     for canonical, keywords in _STYLE_KEYWORDS:
-        if any(k in lower for k in keywords):
+        if any(_contains_keyword(lower, k) for k in keywords):
             return canonical
     return "Corporate"
 
@@ -185,8 +199,7 @@ def get_service_tags(slide_number_str: str, content: str = "", visual_raw: str =
     Primary:  range-based lookup using the authoritative slide taxonomy.
     Fallback: keyword matching on content + visual_raw (for slides 579+ or edge cases).
     """
-    import re as _re
-    nums = _re.findall(r"\d+", str(slide_number_str))
+    nums = re.findall(r"\d+", str(slide_number_str))
     if not nums:
         return "General", "General"
     start = int(nums[0])
