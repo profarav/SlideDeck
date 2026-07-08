@@ -10,7 +10,7 @@ import argparse
 import json
 import re
 from pathlib import Path
-import openpyxl
+
 from tags import normalize_industry, normalize_visual_style, get_service_tags
 
 INDEX_PATH = str(Path(__file__).parent / "slide_index.json")
@@ -36,6 +36,8 @@ def _clean_slide_num(val) -> str:
 
 
 def load_slides(xlsx_path: str) -> list[dict]:
+    import openpyxl  # imported lazily so `from ingest import INDEX_PATH` (used by the
+    # runtime retriever) doesn't require the openpyxl dependency at import time.
     wb = openpyxl.load_workbook(xlsx_path)
     ws = wb.worksheets[0]
 
