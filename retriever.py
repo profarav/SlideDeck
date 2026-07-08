@@ -257,12 +257,13 @@ Preferred visual style: {visual_style}
 Available slides:
 {slide_list}
 
-Return a JSON object with exactly two keys:
+Return a JSON object with exactly three keys:
 - "indices": array of the {n} best slide indices (0-based), ordered best-first
+- "scores": object mapping each chosen index (as a string) to a strict 0.0–1.0 relevance score. Only a genuinely strong match scores above 0.7; a wrong work type or unrelated industry should score below 0.5.
 - "reasons": object mapping each chosen index (as a string) to a single sentence explaining specifically why this slide fits this prospect
 
 Prioritize: (1) work type match, (2) industry match, (3) content relevance, (4) visual style.
-Example: {{"indices": [2, 0, 4], "reasons": {{"2": "Directly showcases B2B SaaS dashboard work for a fintech client.", "0": "Landing page for a payments company matches the prospect's embedded finance product.", "4": "Investor deck for a healthcare startup mirrors the client's fundraising context."}}}}
+Example: {{"indices": [2, 0, 4], "scores": {{"2": 0.92, "0": 0.71, "4": 0.44}}, "reasons": {{"2": "Directly showcases B2B SaaS dashboard work for a fintech client.", "0": "Landing page for a payments company matches the prospect's embedded finance product.", "4": "Investor deck, but for a healthcare startup rather than this prospect's space."}}}}
 Return only the JSON object, nothing else."""
 
     msg = client.messages.create(
@@ -277,15 +278,17 @@ Return only the JSON object, nothing else."""
 
     # Parse the response — try full object first, fall back to array-only
     indices = []
+    scores: dict[str, float] = {}
     reasons: dict[str, str] = {}
     try:
         obj = json.loads(raw)
         if isinstance(obj, dict):
             indices = obj.get("indices", [])
+            scores = {str(k): float(v) for k, v in obj.get("scores", {}).items()}
             reasons = {str(k): v for k, v in obj.get("reasons", {}).items()}
         elif isinstance(obj, list):
             indices = obj
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         arr_match = _re.search(r"\[[\d,\s]+\]", raw)
         if arr_match:
             indices = json.loads(arr_match.group(0))
@@ -295,7 +298,12 @@ Return only the JSON object, nothing else."""
     results = []
     for rank, i in enumerate(valid[:n]):
         slide = dict(candidates[i])
-        slide["score"] = round(1.0 - (rank / max(total, 1)) * 0.3, 3)
+        # Use Claude's relevance score when provided; otherwise fall back to a mild
+        # rank-position estimate (not the confident 1.0-anchored value used before).
+        if str(i) in scores:
+            slide["score"] = round(max(0.0, min(1.0, scores[str(i)])), 3)
+        else:
+            slide["score"] = round(0.65 - (rank / max(total, 1)) * 0.3, 3)
         slide["why"] = reasons.get(str(i), "")
         results.append(slide)
     return results
@@ -396,8 +404,10 @@ def _merge_ranked_with_pins(
         if num in excluded or num in seen:
             continue
         item = dict(s)
-        item.setdefault("score", 0.7)
-        item.setdefault("why", "Backfill to complete requested count.")
+        # Backfill is not a judged match — score it low and honestly so it never
+        # outranks a real Claude-scored result or reads as a strong recommendation.
+        item.setdefault("score", 0.35)
+        item.setdefault("why", "Added to fill the requested count — not a strong match.")
         results.append(item)
         seen.add(num)
         if len(results) >= n_results:
