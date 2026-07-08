@@ -226,6 +226,46 @@ def _keyword_rank(query: str, candidates: list[dict], top_n: int) -> list[dict]:
     return scored[:top_n]
 
 
+def _parse_rank_json(raw: str) -> tuple[list[int], dict[str, float], dict[str, str]]:
+    """
+    Parse a ranking response of the form
+        {"indices": [...], "scores": {"i": 0.x}, "reasons": {"i": "..."}}
+    Tolerant of truncation: when the model's JSON is cut off mid-string (which happens
+    when many reasons overflow max_tokens), fall back to regex-salvaging whatever
+    scores/reasons/indices are present rather than dropping them all to 0.0.
+    """
+    raw = raw.strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+        raw = raw.strip()
+
+    try:
+        obj = json.loads(raw)
+        if isinstance(obj, dict):
+            return (
+                obj.get("indices", []),
+                {str(k): float(v) for k, v in obj.get("scores", {}).items()},
+                {str(k): v for k, v in obj.get("reasons", {}).items()},
+            )
+        if isinstance(obj, list):
+            return obj, {}, {}
+    except (json.JSONDecodeError, ValueError):
+        pass
+
+    # Lenient salvage from malformed/truncated JSON.
+    indices: list[int] = []
+    m = _re.search(r'"indices"\s*:\s*\[([\d,\s]+)', raw)
+    if m:
+        indices = [int(x) for x in _re.findall(r"\d+", m.group(1))]
+    scores = {k: float(v) for k, v in _re.findall(r'"(\d+)"\s*:\s*(-?\d+(?:\.\d+)?)', raw)}
+    reasons = {k: v for k, v in _re.findall(r'"(\d+)"\s*:\s*"((?:[^"\\]|\\.)*)"', raw)}
+    if not indices and scores:
+        indices = [int(k) for k in sorted(scores, key=lambda k: scores[k], reverse=True)]
+    return indices, scores, reasons
+
+
 def _claude_rank(
     query: str,
     candidates: list[dict],
@@ -268,31 +308,11 @@ Return only the JSON object, nothing else."""
 
     msg = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=512,
+        max_tokens=2048,
         messages=[{"role": "user", "content": prompt}],
     )
 
-    raw = msg.content[0].text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1].lstrip("json").strip()
-
-    # Parse the response — try full object first, fall back to array-only
-    indices = []
-    scores: dict[str, float] = {}
-    reasons: dict[str, str] = {}
-    try:
-        obj = json.loads(raw)
-        if isinstance(obj, dict):
-            indices = obj.get("indices", [])
-            scores = {str(k): float(v) for k, v in obj.get("scores", {}).items()}
-            reasons = {str(k): v for k, v in obj.get("reasons", {}).items()}
-        elif isinstance(obj, list):
-            indices = obj
-    except (json.JSONDecodeError, ValueError):
-        arr_match = _re.search(r"\[[\d,\s]+\]", raw)
-        if arr_match:
-            indices = json.loads(arr_match.group(0))
-
+    indices, scores, reasons = _parse_rank_json(msg.content[0].text)
     valid = [i for i in indices if isinstance(i, int) and 0 <= i < len(candidates)]
     total = len(valid)
     results = []
@@ -594,27 +614,11 @@ Return only the JSON object, nothing else."""
 
     msg = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=1024,
+        max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
 
-    raw = msg.content[0].text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1].lstrip("json").strip()
-
-    indices: list[int] = []
-    scores: dict[str, float] = {}
-    reasons: dict[str, str] = {}
-    try:
-        obj = json.loads(raw)
-        if isinstance(obj, dict):
-            indices = obj.get("indices", [])
-            scores = {str(k): float(v) for k, v in obj.get("scores", {}).items()}
-            reasons = {str(k): v for k, v in obj.get("reasons", {}).items()}
-    except (json.JSONDecodeError, ValueError):
-        arr_match = _re.search(r"\[[\d,\s]+\]", raw)
-        if arr_match:
-            indices = json.loads(arr_match.group(0))
+    indices, scores, reasons = _parse_rank_json(msg.content[0].text)
 
     # If Claude omitted some indices, append them at the end with score 0.0
     seen = set(indices)

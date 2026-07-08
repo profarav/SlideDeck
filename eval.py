@@ -60,7 +60,9 @@ CASES: list[dict] = [
             "search_query": "direct-to-consumer apparel brand identity and packaging",
             "visual_style": "Editorial",
         },
-        "expect": ["Ta'Da Laundry", "Nonchalant"],
+        # Nonchalant is the streetwear/apparel brand — the true strong match. Ta'Da
+        # (a laundromat brand) is only loosely related, so it is not an expectation.
+        "expect": ["Nonchalant"],
         "forbid": [],
     },
     {
