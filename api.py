@@ -17,6 +17,7 @@ import io
 import re as _re
 import threading
 import time
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -61,16 +62,80 @@ def serve_ui():
 GITHUB_RAW_BASE = "https://raw.githubusercontent.com/profarav/SlideDeck/main/slides_png"
 
 
-def _fetch_url_text(url: str) -> str:
-    """Fetch a URL and return cleaned plain text (max 3000 chars)."""
+_URL_TEXT_CAP = 3000
+
+
+def _clean_html_text(html_fragment: str) -> str:
+    """Strip tags from an HTML fragment and collapse whitespace."""
+    text = _re.sub(r"<[^>]+>", " ", html_fragment)
+    text = _html.unescape(text)
+    return _re.sub(r"\s+", " ", text).strip()
+
+
+def _http_get(url: str) -> str:
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=10) as r:
-        raw = r.read().decode("utf-8", errors="ignore")
-    raw = _re.sub(r"<(script|style)[^>]*>.*?</(script|style)>", "", raw, flags=_re.DOTALL | _re.IGNORECASE)
-    text = _re.sub(r"<[^>]+>", " ", raw)
-    text = _html.unescape(text)
-    text = _re.sub(r"\s+", " ", text).strip()
-    return text[:3000]
+        return r.read().decode("utf-8", errors="ignore")
+
+
+def _fetch_url_text(url: str) -> str:
+    """
+    Fetch a URL and return the highest-signal text for profiling a prospect.
+
+    A plain tag-strip returns mostly nav/cookie-banner junk from the top of the page,
+    which weakens the persona. Instead we pull the parts that actually describe the
+    company — <title>, meta/OG description, headings — first, then the main body with
+    boilerplate (script/style/nav/header/footer/aside) removed, concatenated up to the
+    cap. Follows one trivial meta-refresh redirect. stdlib-only (Vercel constraint).
+    """
+    raw = _http_get(url)
+
+    # Follow a single meta-refresh redirect (common on splash/landing shells).
+    refresh = _re.search(
+        r'<meta[^>]+http-equiv=["\']?refresh["\']?[^>]*content=["\'][^"\']*url=([^"\'>\s]+)',
+        raw, _re.IGNORECASE,
+    )
+    if refresh:
+        try:
+            raw = _http_get(urllib.parse.urljoin(url, _html.unescape(refresh.group(1))))
+        except Exception:
+            pass
+
+    parts: list[str] = []
+
+    def _meta(pattern: str) -> str:
+        m = _re.search(pattern, raw, _re.IGNORECASE)
+        return _html.unescape(m.group(1)).strip() if m else ""
+
+    title = _meta(r"<title[^>]*>(.*?)</title>")
+    desc = (
+        _meta(r'<meta[^>]+name=["\']description["\'][^>]*content=["\']([^"\']+)')
+        or _meta(r'<meta[^>]+property=["\']og:description["\'][^>]*content=["\']([^"\']+)')
+        or _meta(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]*name=["\']description["\']')
+    )
+    if title:
+        parts.append(f"Title: {title}")
+    if desc:
+        parts.append(f"Description: {desc}")
+
+    # Headings — strong signals of what the company does.
+    headings = [
+        _clean_html_text(h) for h in _re.findall(r"<h[12][^>]*>(.*?)</h[12]>", raw, _re.IGNORECASE | _re.DOTALL)
+    ]
+    headings = [h for h in headings if h]
+    if headings:
+        parts.append("Headings: " + " | ".join(dict.fromkeys(headings))[:800])
+
+    # Main body: drop boilerplate containers, then strip remaining tags.
+    body = _re.sub(
+        r"<(script|style|nav|header|footer|aside)[^>]*>.*?</\1>",
+        " ", raw, flags=_re.DOTALL | _re.IGNORECASE,
+    )
+    body_text = _clean_html_text(body)
+    if body_text:
+        parts.append("Body: " + body_text)
+
+    return "\n".join(parts)[:_URL_TEXT_CAP]
 
 
 def _image_url(slide: dict) -> str:
