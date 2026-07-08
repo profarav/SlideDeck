@@ -47,6 +47,47 @@ _EXCLUDE_CLIENTS: frozenset[str] = frozenset({
 })
 
 
+# Canonical display name keyed by a squashed form of the client name (lowercased,
+# punctuation and corporate suffixes removed, spaces stripped). Vision spells the same
+# company several ways — casing (KITCO/Kitco), spacing (Evergreen Wealth/EvergreenWealth),
+# suffixes (Toodo/Toodo Inc.) and OCR misreads (Pantera/Parteira) — which fragmented
+# example grouping and the dedupe-by-client in retrieve_examples. Only clear variants of
+# the SAME company are mapped; look-alikes that are different firms (ClarityPay vs Clarity
+# Health vs Clarity) are deliberately left alone.
+_CLIENT_CANONICAL: dict[str, str] = {
+    "evergreenwealth": "Evergreen Wealth", "everproperwealth": "Evergreen Wealth",
+    "claritypay": "ClarityPay", "claripay": "ClarityPay", "clearlypay": "ClarityPay",
+    "lighton": "LightOn", "lightn": "LightOn", "lightai": "LightOn",
+    "pantera": "Pantera", "parteira": "Pantera",
+    "kawin": "Kawin", "kawm": "Kawin",
+    "sohva": "Sohva", "solva": "Sohva",
+    "guru": "Guru", "formguru": "Guru", "guruformerlyformguru": "Guru",
+    "traumacare": "TraumaCare", "traumacareai": "TraumaCare",
+    "connectivehealth": "Connective Health",
+    "toodo": "Toodo",
+    "longshortlist": "Long Short List", "longsmartlist": "Long Short List",
+    "kitco": "Kitco",
+    "cyberwhyze": "Cyberwhyze", "cyberwhale": "Cyberwhyze",
+    "eventio": "Eventio", "evento": "Eventio",
+    "matthewcorwin": "Matthew Corwin", "matthewcorwink": "Matthew Corwin",
+    "aerolinktechnologies": "AeroLink Technologies", "aerolinktecnologias": "AeroLink Technologies",
+    "svlinvestmentmanagement": "SVL Investment Management", "svl": "SVL Investment Management",
+    "svi": "SVL Investment Management",
+    "availity": "Availity", "avality": "Availity",
+    "seafare": "SeaFare", "seafire": "SeaFare",
+}
+
+
+def _canonical_client(name: str) -> str:
+    """Fold known spelling variants of a client name to one display name (else unchanged)."""
+    if not name:
+        return name
+    key = _re.sub(r"[^a-z0-9]+", " ", name.lower())
+    key = _re.sub(r"\b(inc|incorporated|llc|ltd|co|corp|company|the)\b", " ", key)
+    key = key.replace(" ", "")
+    return _CLIENT_CANONICAL.get(key, name)
+
+
 def _parse_sheet_slide_numbers(sn: str) -> list[int]:
     """Parse slide_index slide_number formats: '1-3', '4 & 6', '62 & 99-100'."""
     nums: list[int] = []
@@ -133,6 +174,10 @@ def _load_slides() -> list[dict]:
         # source and are kept untouched. Unnamed/hallucinated vision clients are dropped
         # downstream via _EXCLUDE_CLIENTS.
         merged.append(enriched)
+
+    # Fold client-name spelling variants to one canonical name (in memory only).
+    for s in merged:
+        s["client"] = _canonical_client(s.get("client", ""))
 
     _slides_cache = merged
     return _slides_cache
