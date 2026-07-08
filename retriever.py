@@ -20,12 +20,17 @@ _slides_cache: list[dict] | None = None
 
 # The Master Sheet was authored for an older, shorter cut of the deck, so its
 # slide-number ranges only line up with the actual slides through the front of the
-# deck. Past this slide number the rows describe DIFFERENT slides than are really
-# there (verified against the PNGs: e.g. the "ClarityPay" row lands on the Denim
-# slide; "Recuro Health / Healthcare" lands on the Ivana Asset finance deck). Up to
-# here the sheet is trusted for client + industry; beyond it, vision (which reads the
-# actual image) is trusted instead. See _load_slides.
-_SHEET_ALIGNED_MAX_SLIDE = 98
+# deck. Up to this slide the sheet is trusted for client + industry; beyond it, vision
+# (which reads the actual image) is trusted instead. See _load_slides.
+#
+# Boundary verified against the PNGs: slides through the "62 & 99-100 SketchPro" row
+# are aligned — 45 is Ta'Da branding, 60 is 1860 Equity, 70-98 are the Pantera/CodeThread/
+# LightOn/HumanFirst/Guru landing pages, and 99-100 literally read "SketchPro / Andre,
+# SketchPro CEO". Drift starts at 103 (shows Denim, sheet says "Agency Portfolio") and is
+# pervasive after: 104 sheet "ClarityPay" is the Denim slide; 411-420 "Recuro Health /
+# Healthcare" is the Ivana Asset private-credit finance deck; 235 "Consumer Brands" is a
+# Physical-Therapy billing page.
+_SHEET_ALIGNED_MAX_SLIDE = 100
 
 # Client values that must never surface as a case study example. Two groups:
 #   1. Agency-internal section headers (short sheet rows: intro, team, pricing, …) —
