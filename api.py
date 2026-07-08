@@ -11,9 +11,12 @@ Endpoints:
   GET  /health
 """
 
+import hashlib
 import html as _html
 import io
 import re as _re
+import threading
+import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -122,6 +125,54 @@ def _resolve_description(description: str, url: str) -> str:
     raise HTTPException(status_code=400, detail="Provide either a description or a URL.")
 
 
+# ── Persona cache ───────────────────────────────────────────────────────────────
+# The profiler (build_search_persona) is a nondeterministic LLM call. Without caching,
+# every refine re-derives a fresh persona, so the ranking a user is pinning/excluding
+# against silently shifts under them. Cache one persona per (description, url) input so
+# the initial generate and its refines share it. Keyed on the RAW inputs (not the
+# URL-resolved text, which can vary between fetches).
+
+_PERSONA_TTL = 3600          # seconds
+_PERSONA_MAX = 256           # entries
+_persona_cache: dict[str, tuple[float, dict]] = {}
+_persona_lock = threading.Lock()
+
+
+def _persona_cache_key(description: str, url: str) -> str:
+    return hashlib.sha256(f"{description}\x00{url}".encode("utf-8")).hexdigest()[:16]
+
+
+def _persona_for_request(description: str, url: str, persona_key: str = "") -> tuple[dict, str]:
+    """
+    Return (persona, key), reusing a cached persona when possible. A caller-supplied
+    persona_key forces reuse of that exact persona (e.g. across refine calls); otherwise
+    the (description, url) inputs are hashed. On a hit, neither the URL fetch nor the
+    profiler runs. On a miss, resolve + profile, then cache.
+    """
+    now = time.time()
+    with _persona_lock:
+        for k in [k for k, (ts, _) in _persona_cache.items() if now - ts > _PERSONA_TTL]:
+            del _persona_cache[k]
+        for k in (persona_key, _persona_cache_key(description, url)):
+            if k and k in _persona_cache:
+                _, persona = _persona_cache[k]
+                _persona_cache[k] = (now, persona)   # refresh recency
+                return persona, k
+
+    resolved = _resolve_description(description, url)
+    try:
+        persona = build_search_persona(resolved)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
+
+    key = _persona_cache_key(description, url)
+    with _persona_lock:
+        if len(_persona_cache) >= _PERSONA_MAX:
+            del _persona_cache[min(_persona_cache, key=lambda k: _persona_cache[k][0])]
+        _persona_cache[key] = (time.time(), persona)
+    return persona, key
+
+
 # ── Models ────────────────────────────────────────────────────────────────────
 
 class ProspectRequest(BaseModel):
@@ -135,6 +186,7 @@ class RefineRequest(ProspectRequest):
     excluded: list[str] = Field(default_factory=list)
     previous_visible: list[str] = Field(default_factory=list)
     variant: str = ""
+    persona_key: str = ""   # reuse the exact persona from the initial generate call
 
 
 class ExistingSectionRequest(BaseModel):
@@ -190,6 +242,7 @@ class ExampleResult(BaseModel):
 
 class ExamplesResponse(BaseModel):
     persona: dict
+    persona_key: str = ""
     examples: list[ExampleResult]
 
 
@@ -216,6 +269,7 @@ def _to_example_result(e: dict) -> ExampleResult:
 
 class DeckResponse(BaseModel):
     persona: dict
+    persona_key: str = ""
     slides: list[SlideResult]
 
 
@@ -226,6 +280,7 @@ class DeckSection(BaseModel):
 
 class FullDeckResponse(BaseModel):
     persona: dict
+    persona_key: str = ""
     sections: list[DeckSection]
     total_slides: int
 
@@ -239,25 +294,19 @@ class ExportRequest(BaseModel):
 
 @app.post("/generate-deck", response_model=ExamplesResponse)
 def generate_deck(req: ProspectRequest):
-    description = _resolve_description(req.description.strip(), req.url.strip())
-    try:
-        persona = build_search_persona(description)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
+    persona, key = _persona_for_request(req.description.strip(), req.url.strip())
     try:
         examples = retrieve_examples(persona, n_results=req.n_results)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Retriever error: {e}")
-    return ExamplesResponse(persona=persona, examples=[_to_example_result(e) for e in examples])
+    return ExamplesResponse(
+        persona=persona, persona_key=key, examples=[_to_example_result(e) for e in examples]
+    )
 
 
 @app.post("/build-deck", response_model=FullDeckResponse)
 def build_deck_endpoint(req: ProspectRequest):
-    description = _resolve_description(req.description.strip(), req.url.strip())
-    try:
-        persona = build_search_persona(description)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
+    persona, key = _persona_for_request(req.description.strip(), req.url.strip())
     try:
         deck = build_full_deck(persona, n_case_studies=req.n_results)
     except Exception as e:
@@ -272,6 +321,7 @@ def build_deck_endpoint(req: ProspectRequest):
     ]
     return FullDeckResponse(
         persona=persona,
+        persona_key=key,
         sections=sections,
         total_slides=deck["total_slides"],
     )
@@ -279,11 +329,7 @@ def build_deck_endpoint(req: ProspectRequest):
 
 @app.post("/refine-slides", response_model=DeckResponse)
 def refine_slides(req: RefineRequest):
-    description = _resolve_description(req.description.strip(), req.url.strip())
-    try:
-        persona = build_search_persona(description)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
+    persona, key = _persona_for_request(req.description.strip(), req.url.strip(), req.persona_key)
     try:
         slides = retrieve_case_studies_with_controls(
             persona,
@@ -295,16 +341,12 @@ def refine_slides(req: RefineRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Retriever error: {e}")
-    return DeckResponse(persona=persona, slides=[_to_slide_result(s) for s in slides])
+    return DeckResponse(persona=persona, persona_key=key, slides=[_to_slide_result(s) for s in slides])
 
 
 @app.post("/refine-full-deck", response_model=FullDeckResponse)
 def refine_full_deck_endpoint(req: RefineFullDeckRequest):
-    description = _resolve_description(req.description.strip(), req.url.strip())
-    try:
-        persona = build_search_persona(description)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Profiler error: {e}")
+    persona, key = _persona_for_request(req.description.strip(), req.url.strip(), req.persona_key)
 
     existing_sections = [sec.model_dump() for sec in req.existing_sections]
     try:
@@ -329,6 +371,7 @@ def refine_full_deck_endpoint(req: RefineFullDeckRequest):
     ]
     return FullDeckResponse(
         persona=persona,
+        persona_key=key,
         sections=sections,
         total_slides=deck["total_slides"],
     )
