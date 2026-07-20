@@ -665,7 +665,7 @@ def _claude_rank_examples(
     example_list = "\n".join(
         f"[{i}] {e['client']} | {e['service_type']} | "
         f"Slides {e['slide_range'][0]}–{e['slide_range'][1]} | {e['industry']} | {e['n_slides']} slides\n"
-        f"    {e['_text'][:250]}"
+        f"    {e['_text'][:700]}"
         for i, e in enumerate(examples)
     )
 
@@ -729,6 +729,12 @@ Return only the JSON object, nothing else."""
     return results
 
 
+# Soft ceiling on how many examples get sent to the Claude ranker per query. All
+# industry-matched examples are always included even if this is exceeded; the budget
+# only bounds how many extra keyword-matched examples ride along.
+_RANK_BUDGET = 40
+
+
 def retrieve_examples(persona: dict, n_results: int = 8) -> list[dict]:
     """
     Retrieve and score client case study examples rather than individual slides.
@@ -741,14 +747,17 @@ def retrieve_examples(persona: dict, n_results: int = 8) -> list[dict]:
     visual_style: str = persona["visual_style"]
     service_categories: list[str] = persona.get("service_categories", [])
 
-    # Rank the ENTIRE pool with Claude — do not let keyword overlap pre-decide what
-    # the ranker sees. Keyword overlap is a weak proxy for relevance, and every time
-    # it cut the pool it hid a genuinely strong match (Sohva's "TikTok Shop Agency"
-    # slide lost to literal word overlap). Real pools top out around 112 examples,
-    # which fits one ranking call; the 150 cap is a pure cost/latency safety rail that
-    # only engages on a pathologically wide pool, where keyword pre-rank then trims.
-    top_n = min(150, len(examples))
-    candidates = _keyword_rank_examples(query, examples, top_n=top_n)
+    # Bounded, recall-safe pre-rank. Descriptions are now ~1100 chars each, so sending
+    # the whole pool (100+ examples) to Claude every query is slow and costly. But a
+    # blind keyword cut is what hid strong matches before (Sohva's "TikTok Shop Agency"
+    # slide lost on literal word overlap). Compromise: ALWAYS keep every industry-
+    # matched (_core) example — those are the ones a blind cut used to drop — then fill
+    # the remaining budget with the best keyword matches from the rest. Fast and cheap,
+    # without re-introducing the recall bug.
+    core = [e for e in examples if e.get("_core")]
+    rest = [e for e in examples if not e.get("_core")]
+    budget = max(_RANK_BUDGET - len(core), 0)
+    candidates = core + _keyword_rank_examples(query, rest, top_n=min(budget, len(rest)))
 
     ranked = _claude_rank_examples(query, candidates, visual_style, service_categories)
     ranked.sort(key=lambda e: e["score"], reverse=True)

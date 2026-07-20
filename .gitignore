@@ -1,34 +1,5 @@
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.egg-info/
-dist/
-build/
-
-# Virtual environments
-.venv/
-venv/
-env/
-
-# Environment variables
-.env
-.env.local
-
-# IDE
-.idea/
-.vscode/
-*.swp
-
-# Data files (too large for git / generated locally)
-chroma_db/
-
-# Google service account credentials — NEVER commit this
-service_account.json
-
-# OS
-.DS_Store
-Thumbs.db
-.venv-ingest/
 vision_index.backup-*.json
+.venv-ingest/
+slides_thumb/
+.env
+.DS_Store

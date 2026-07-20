@@ -43,13 +43,19 @@ MODEL = "claude-haiku-4-5"   # Faster + cheaper for vision extraction
 # keyword-matching the prose description after the fact — that mislabels heavily because
 # design-agency descriptions are saturated with generic words ("design", "data", "ai").
 _SYSTEM_PROMPT = f"""You are analyzing portfolio slides from Klimt & Design, a premium design agency.
-For each slide image, extract exactly 4 fields and return ONLY valid JSON — no other text.
+For each slide image, extract exactly 5 fields and return ONLY valid JSON — no other text.
+
+A salesperson uses these slides to show a prospect "here's comparable work we've
+done." The `description` is the ONLY thing a downstream matcher sees — it never sees
+the image — so make it rich enough to judge fit WITHOUT looking. Be concrete: name
+what you actually see.
 
 {{
   "client": "<company or project name visible on the slide, or 'Klimt & Design' if it's an agency overview slide, or 'Unknown' if unclear>",
   "industry": "<the SECTOR THE CLIENT'S OWN BUSINESS OPERATES IN — choose the single closest match from this list: {', '.join(CANONICAL_INDUSTRIES)}. Judge the client's business, NOT the kind of design work shown: a bank whose slide shows brand identity work is 'Finance & Wealth Management', not 'Branding & Design'. Use 'Creative & Marketing Agency' when the client is itself an agency or studio (design, branding, marketing, growth, social, content). Use 'General Agency' ONLY for Klimt & Design's own overview/capability slides, never for a client. Use 'Branding & Design' only when the client sells design tools or design products.>",
-  "content_description": "<2-3 sentences describing exactly what design work this slide shows — UI screens, brand elements, copy, layout, key visuals>",
-  "visual_style_raw": "<1 sentence: dominant colors, typography style, mood, aesthetic>"
+  "deliverable": "<what design work this slide shows, in a few words: e.g. 'website landing page redesign', 'full brand identity system', 'mobile app UI screens', 'pitch/investor deck', 'social media ad campaign', 'logo suite & stylescape'.>",
+  "description": "<4-5 rich, concrete sentences covering, in this order: (1) what the client's COMPANY does — its product/service, who it serves, its niche; (2) what is physically ON THIS SLIDE — layout and sections, headline/tagline copy quoted verbatim if legible, any REAL client logos or brand names visible, any numbers/metrics/claims, specific UI or product elements, the photography or illustration style. Pack it with specifics; avoid generic filler like 'clean modern design'.>",
+  "visual_style_raw": "<1-2 sentences: dominant colors (name them), typography style, mood, and overall aesthetic — enough to picture the look.>"
 }}"""
 
 
@@ -76,7 +82,7 @@ def _analyze_slide(client_api: anthropic.Anthropic, slide_path: Path) -> dict:
 
     msg = client_api.messages.create(
         model=MODEL,
-        max_tokens=400,
+        max_tokens=900,  # richer 6-field description needs room; 400 truncated content
         system=_SYSTEM_PROMPT,
         messages=[
             {
@@ -109,14 +115,14 @@ def _analyze_slide(client_api: anthropic.Anthropic, slide_path: Path) -> dict:
         # Fallback if Claude returns non-JSON
         extracted = {
             "client": "Unknown",
-            "content_description": raw[:200],
+            "description": raw[:200],
             "visual_style_raw": "",
         }
 
     # Derive normalized tags
     service_type, service_category = get_service_tags(
         str(slide_num),
-        extracted.get("content_description", ""),
+        extracted.get("description", ""),
         extracted.get("visual_style_raw", ""),
     )
     # Prefer the industry vision picked directly from the image; fall back to keyword
@@ -126,7 +132,7 @@ def _analyze_slide(client_api: anthropic.Anthropic, slide_path: Path) -> dict:
         industry = vision_industry
     else:
         industry = normalize_industry(
-            f"{extracted.get('client', '')} {extracted.get('content_description', '')}"
+            f"{extracted.get('client', '')} {extracted.get('description', '')}"
         )
     visual_style = normalize_visual_style(extracted.get("visual_style_raw", ""))
 
@@ -139,12 +145,16 @@ def _analyze_slide(client_api: anthropic.Anthropic, slide_path: Path) -> dict:
         "visual_style": visual_style,
         "service_type": service_type,
         "service_category": service_category,
-        "content": extracted.get("content_description", ""),
-        "text": (
-            f"{extracted.get('client', '')} "
-            f"{extracted.get('content_description', '')} "
-            f"{extracted.get('visual_style_raw', '')}"
-        ),
+        "deliverable": extracted.get("deliverable", ""),
+        # `content` is the example blurb shown in the UI.
+        "content": extracted.get("description", ""),
+        # `text` is the matcher's full signal — every field, untruncated downstream.
+        "text": " ".join(filter(None, [
+            extracted.get("client", ""),
+            extracted.get("deliverable", ""),
+            extracted.get("description", ""),
+            extracted.get("visual_style_raw", ""),
+        ])),
     }
 
 
