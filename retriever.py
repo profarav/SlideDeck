@@ -388,6 +388,11 @@ def _build_filtered_pool(persona: dict) -> list[dict]:
     # levels below count only presentable slides. (Doing this after the fallback let a
     # level fill with all-excluded slides, suppress Level 5, then dedup to nothing.)
     slides = [s for s in _load_slides() if s.get("client") not in _EXCLUDE_CLIENTS]
+    # Slides are cached and mutated in place, so clear the per-query "_core" flag
+    # (industry-match prior) before recomputing it — otherwise it leaks from a
+    # previous persona into this one.
+    for s in slides:
+        s.pop("_core", None)
     industries: list[str] = persona["industries"]
     service_categories: list[str] = persona.get("service_categories", [])
 
@@ -421,9 +426,18 @@ def _build_filtered_pool(persona: dict) -> list[dict]:
         ]
 
     # ── Level 3: industry only ─────────────────────────────────────────────────
-    if len(filtered) < 3:
+    # ALSO unconditional. The mirror image of the Level 2 bug: a slide whose CLIENT
+    # is a perfect business match but whose work-type tag differs would be dropped —
+    # e.g. Chemistry is a podcast-production creative agency (exact match for a
+    # podcast-studio prospect) but is tagged work-type "Landing Page", so a persona
+    # asking for "Branding / Social" never saw it. Pool = (matches your industry) ∪
+    # (matches your work type); the ranker decides which are actually relevant.
+    if industries:
         seen = {s["slide_number"] for s in filtered}
-        filtered += [s for s in slides if s["industry"] in industries and s["slide_number"] not in seen]
+        new = [s for s in slides if s["industry"] in industries and s["slide_number"] not in seen]
+        for s in new:
+            s["_core"] = True  # industry match — same prior as Level 1
+        filtered += new
 
     # ── Level 4: General Agency fallback ──────────────────────────────────────
     if len(filtered) < 3:
