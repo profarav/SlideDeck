@@ -184,8 +184,47 @@ def _load_slides() -> list[dict]:
     for s in merged:
         s["client"] = _canonical_client(s.get("client", ""))
 
+    # Collapse each client to a SINGLE consensus industry. Industry is stored per
+    # slide, but a client is one business in one sector — so a client whose slides
+    # scatter across pools (Pantera was tagged 4 different industries; Primer AI on
+    # one slide, Creative on the next) is only ever half-retrievable and shows an
+    # incoherent label. Majority vote per client, and on a tie prefer a specific
+    # label over the over-applied catch-alls, since those are exactly the buckets
+    # vision leaks into. Skip non-client buckets that legitimately hold many real
+    # businesses (Unknown / Redacted / blank).
+    by_client: dict[str, list[dict]] = {}
+    for s in merged:
+        c = s.get("client", "")
+        if c and c not in _AMBIGUOUS_CLIENT_BUCKETS:
+            by_client.setdefault(c, []).append(s)
+    for slides in by_client.values():
+        consensus = _consensus_industry([s.get("industry", "") for s in slides if s.get("industry")])
+        if consensus:
+            for s in slides:
+                s["industry"] = consensus
+
     _slides_cache = merged
     return _slides_cache
+
+
+# Catch-all industry buckets vision over-applies; on a per-client tie, a specific
+# label beats these. Not exclusions — just lower priority when a client is split.
+_GENERIC_INDUSTRIES = frozenset({"General Agency", "AI & Technology", "B2B SaaS"})
+# Client names that are not a single business (many distinct clients share them),
+# so their slides must NOT be collapsed to one industry.
+_AMBIGUOUS_CLIENT_BUCKETS = frozenset({"Unknown", "Redacted", ""})
+
+
+def _consensus_industry(industries: list[str]) -> str:
+    if not industries:
+        return ""
+    counts = Counter(industries)
+    top_count = max(counts.values())
+    tied = [i for i, c in counts.items() if c == top_count]
+    if len(tied) == 1:
+        return tied[0]
+    specific = sorted(i for i in tied if i not in _GENERIC_INDUSTRIES)
+    return specific[0] if specific else sorted(tied)[0]
 
 
 _STOPWORDS = frozenset({
@@ -653,7 +692,7 @@ Return only the JSON object, nothing else."""
 
     msg = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=4096,
+        max_tokens=8192,  # ranking the full pool (up to ~112 examples) with reasons
         messages=[{"role": "user", "content": prompt}],
     )
 
@@ -688,11 +727,13 @@ def retrieve_examples(persona: dict, n_results: int = 8) -> list[dict]:
     visual_style: str = persona["visual_style"]
     service_categories: list[str] = persona.get("service_categories", [])
 
-    # Widening the pool on service_category (see _build_filtered_pool) means far more
-    # examples reach this point, and a 25-wide keyword cut was dropping the strongest
-    # matches before ranking. Keyword overlap is a weak proxy for relevance, so let
-    # Claude — the part that actually judges well — see a much larger slice.
-    top_n = min(max(60, n_results * 4), len(examples))
+    # Rank the ENTIRE pool with Claude — do not let keyword overlap pre-decide what
+    # the ranker sees. Keyword overlap is a weak proxy for relevance, and every time
+    # it cut the pool it hid a genuinely strong match (Sohva's "TikTok Shop Agency"
+    # slide lost to literal word overlap). Real pools top out around 112 examples,
+    # which fits one ranking call; the 150 cap is a pure cost/latency safety rail that
+    # only engages on a pathologically wide pool, where keyword pre-rank then trims.
+    top_n = min(150, len(examples))
     candidates = _keyword_rank_examples(query, examples, top_n=top_n)
 
     ranked = _claude_rank_examples(query, candidates, visual_style, service_categories)
