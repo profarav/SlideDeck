@@ -47,7 +47,7 @@ For each slide image, extract exactly 4 fields and return ONLY valid JSON — no
 
 {{
   "client": "<company or project name visible on the slide, or 'Klimt & Design' if it's an agency overview slide, or 'Unknown' if unclear>",
-  "industry": "<the client's industry — choose the single closest match from this list: {', '.join(CANONICAL_INDUSTRIES)}. Use 'General Agency' only for Klimt's own agency/overview slides>",
+  "industry": "<the SECTOR THE CLIENT'S OWN BUSINESS OPERATES IN — choose the single closest match from this list: {', '.join(CANONICAL_INDUSTRIES)}. Judge the client's business, NOT the kind of design work shown: a bank whose slide shows brand identity work is 'Finance & Wealth Management', not 'Branding & Design'. Use 'Creative & Marketing Agency' when the client is itself an agency or studio (design, branding, marketing, growth, social, content). Use 'General Agency' ONLY for Klimt & Design's own overview/capability slides, never for a client. Use 'Branding & Design' only when the client sells design tools or design products.>",
   "content_description": "<2-3 sentences describing exactly what design work this slide shows — UI screens, brand elements, copy, layout, key visuals>",
   "visual_style_raw": "<1 sentence: dominant colors, typography style, mood, aesthetic>"
 }}"""

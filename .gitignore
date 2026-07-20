@@ -30,3 +30,5 @@ service_account.json
 # OS
 .DS_Store
 Thumbs.db
+.venv-ingest/
+vision_index.backup-*.json

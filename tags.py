@@ -42,6 +42,12 @@ CANONICAL_INDUSTRIES = [
     "Data & Analytics",
     "Operations & Logistics",
     "Maritime",
+    # The CLIENT is themselves an agency/studio (design, branding, marketing, growth,
+    # social). Distinct from "General Agency", which means Klimt's OWN slides. Without
+    # this bucket vision had nowhere to put peer agencies and scattered them into
+    # "B2B SaaS" / "General Agency", which is why a design-agency prospect could not
+    # find the design-agency work in the library.
+    "Creative & Marketing Agency",
     "General Agency",
 ]
 
