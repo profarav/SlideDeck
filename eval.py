@@ -102,8 +102,12 @@ def _check(case: dict, clients: set[str]) -> list[tuple[str, bool]]:
     checks: list[tuple[str, bool]] = []
     for e in case["expect"]:
         checks.append((f"expect  {e}", e in clients))
-    for f in case["forbid"]:
-        checks.append((f"forbid  {f}", f not in clients))
+    # NOTE: "forbid" is deliberately NOT asserted against the candidate pool.
+    # _build_filtered_pool now widens on service_category unconditionally, so a
+    # mis-tagged slide is reachable rather than structurally excluded — which means
+    # the pool legitimately contains off-industry clients. Keeping them out of what
+    # the salesperson actually SEES is the ranker's job, so forbid is checked against
+    # ranked results above the visible cutoff (see run(full=True)).
     leaked = sorted(c for c in clients if c in _EXCLUDE_CLIENTS)
     checks.append((f"no excluded-client leak{' ('+', '.join(leaked)+')' if leaked else ''}", not leaked))
     return checks
@@ -126,6 +130,10 @@ def run(full: bool) -> int:
                 top = {e["client"] for e in ranked if e.get("score", 0) >= 0.5}
                 for e in case["expect"]:
                     checks.append((f"[ranked>=.5] {e}", e in top))
+                # Forbidden clients may sit in the wide pool, but must never be
+                # shown to the salesperson — i.e. must rank below the 0.5 cutoff.
+                for f in case["forbid"]:
+                    checks.append((f"[ranked<.5] {f}", f not in top))
 
         case_pass = sum(1 for _, ok in checks if ok)
         total += len(checks)

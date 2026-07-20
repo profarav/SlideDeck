@@ -222,7 +222,14 @@ def _keyword_rank(query: str, candidates: list[dict], top_n: int) -> list[dict]:
         return candidates
 
     tokens = _query_tokens(query)
-    scored = sorted(candidates, key=lambda c: _keyword_score(tokens, c.get("text", "")), reverse=True)
+    # "_core" slides matched the persona's industry as well as its work type. Give
+    # them a prior so unconditional service_category widening (see
+    # _build_filtered_pool) broadens reach without swamping on-industry work.
+    scored = sorted(
+        candidates,
+        key=lambda c: _keyword_score(tokens, c.get("text", "")) + (2 if c.get("_core") else 0),
+        reverse=True,
+    )
     return scored[:top_n]
 
 
@@ -352,9 +359,21 @@ def _build_filtered_pool(persona: dict) -> list[dict]:
         and s.get("service_category") in service_categories
     ]
 
+    for s in filtered:
+        s["_core"] = True
+
     # ── Level 2: service_category only ────────────────────────────────────────
     # Right work type from any industry beats wrong work type from right industry.
-    if len(filtered) < 3 and service_categories:
+    #
+    # This widening is UNCONDITIONAL, not a <3 fallback. Industry tags are known
+    # to be unreliable on the back half of the deck (see _SHEET_ALIGNED_MAX_SLIDE),
+    # so gating on industry makes a mis-tagged slide structurally unreachable no
+    # matter how well it matches: e.g. the Primer design-agency site is tagged
+    # "AI & Technology", so a design-agency prospect could never surface it even
+    # though it is the single most on-point example in the library. Industry is a
+    # prior, not a gate — core (industry-matching) slides keep a ranking bonus
+    # below, but strong cross-industry work is allowed to compete.
+    if service_categories:
         seen = {s["slide_number"] for s in filtered}
         filtered += [
             s for s in slides
@@ -538,6 +557,9 @@ def _make_example(slides: list[dict]) -> dict:
         "representative_slide": str(sorted_slides[0]["slide_number"]),
         "_slides": sorted_slides,
         "_text": text,
+        # True when any slide in the group matched the persona's industry, so the
+        # example-level pre-rank can apply the same prior as the slide-level one.
+        "_core": any(s.get("_core") for s in sorted_slides),
         "score": 0.0,
         "why": "",
     }
@@ -570,6 +592,10 @@ def _keyword_rank_examples(query: str, examples: list[dict], top_n: int) -> list
     if len(examples) <= top_n:
         return examples
     tokens = _query_tokens(query)
+    # Deliberately NO industry ("_core") bonus here. Examples are already few enough
+    # that Claude can see most of them, and a thumb on the scale for on-industry work
+    # crowded out the strongest cross-industry matches (the Primer / Chemistry design
+    # agencies) before the ranker ever got a look at them.
     return sorted(examples, key=lambda e: _keyword_score(tokens, e.get("_text", "")), reverse=True)[:top_n]
 
 
@@ -603,6 +629,19 @@ Available case study examples:
 {example_list}
 
 Rank ALL examples and assign a strict relevance score. Only truly relevant examples should score above 0.7.
+
+What makes an example relevant, in priority order:
+1. The client's OWN business is the same as or closely adjacent to the prospect's.
+   A salesperson showing a design studio wants to open with "here's work we did for
+   another design studio" — a peer beats a stylistic lookalike from an unrelated
+   sector. Weight this above visual style.
+2. The work type matches what the prospect needs ({service_str}).
+3. The visual style is a good reference for the prospect's taste. This is a
+   tiebreaker, NOT a substitute for 1 and 2 — do not rank a finance or e-commerce
+   client highly for a creative-agency prospect just because it looks bold.
+
+The "industry" label on each example is auto-generated and is often wrong. Judge the
+client's actual business from its name and description text, not from that label.
 
 Return a JSON object with exactly three keys:
 - "indices": array of ALL example indices ordered best-first
@@ -649,7 +688,11 @@ def retrieve_examples(persona: dict, n_results: int = 8) -> list[dict]:
     visual_style: str = persona["visual_style"]
     service_categories: list[str] = persona.get("service_categories", [])
 
-    top_n = min(max(25, n_results * 4), len(examples))
+    # Widening the pool on service_category (see _build_filtered_pool) means far more
+    # examples reach this point, and a 25-wide keyword cut was dropping the strongest
+    # matches before ranking. Keyword overlap is a weak proxy for relevance, so let
+    # Claude — the part that actually judges well — see a much larger slice.
+    top_n = min(max(60, n_results * 4), len(examples))
     candidates = _keyword_rank_examples(query, examples, top_n=top_n)
 
     ranked = _claude_rank_examples(query, candidates, visual_style, service_categories)
